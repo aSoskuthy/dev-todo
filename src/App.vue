@@ -2,11 +2,12 @@
   <v-app>
   <div id="app"> 
   <v-toolbar app>
-   <v-toolbar-title>DevCycle</v-toolbar-title>
+   <v-toolbar-title><v-icon color="teal" large>done_all</v-icon></v-toolbar-title>
    <v-spacer></v-spacer>
    <v-toolbar-items>
-      <v-btn @click="toChecklist" flat>Checklist</v-btn>
-      <v-btn @click="toAccount" flat>Account</v-btn>     
+      <v-btn @click="toChecklist" color="teal" flat><v-icon >check_circle</v-icon></v-btn>    
+      <v-btn @click="toHistory" color="teal" flat><v-icon >history</v-icon></v-btn>    
+      <v-btn @click="toAccount" color="teal" flat><v-icon >account_circle</v-icon></v-btn>     
     </v-toolbar-items>
   </v-toolbar>
   <v-content>
@@ -27,6 +28,9 @@ export default {
     },
     toAccount() {
       this.$router.push('/account')
+    },
+    toHistory(){
+
     }
   }
 }

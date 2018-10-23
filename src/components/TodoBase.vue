@@ -39,12 +39,38 @@
           </v-list-tile>
         </v-list>
     </transition>
-    <v-btn   v-if="poDescription && poNumber" dark color="teal">
+    <v-btn  @click="addWorkItem"   v-if="poDescription && poNumber" dark color="teal">
         <v-icon dark>save</v-icon>
     </v-btn>    
-    <v-btn   v-if="poDescription && poNumber" dark color="teal">
-      <v-icon dark>edit</v-icon>
+    <v-btn @click="notes = true"   v-if="poDescription && poNumber" dark color="teal">
+      <v-icon dark>note_add</v-icon>
     </v-btn>
+    <v-dialog
+      v-model="notes"
+      max-width="870"
+    >
+      <v-card>
+        <v-card-title class="headline">Enter your notes</v-card-title>
+
+        <v-card-text>
+           <v-textarea        
+          v-model="notes_message"          
+        ></v-textarea>
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+
+          <v-btn
+            color="teal"
+            flat="flat"
+            @click="notes = false"
+          >
+            Close
+          </v-btn>         
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
         </v-card>
         </v-flex> 
     </v-layout>    
@@ -57,7 +83,10 @@ data() {
     return {       
         poNumber: null,
         poDescription: null,
-        todos: []       
+        todos: [],
+        notes: false,
+        notes_message: null,
+        status: 'active'       
     }    
 },
 computed: {    
@@ -68,8 +97,7 @@ computed: {
           return this.doneTodos === this.todos.length ? 'teal': ''           
     },
     doneTodos() {
-        let todos = this.todos.filter((todo)=> (todo.checked))
-        return todos.length
+        return this.todos.filter((todo)=> (todo.checked)).length       
     },
     isValidPO() {
         return this.poNumber ? 'done': ''     
@@ -89,6 +117,17 @@ watch: {
     }
 },
 methods:{
+    addWorkItem() {
+        let workItem = {
+            poNumber: this.poNumber,
+            poDescription: this.poDescription,
+            todos: this.todos,
+            notes: this.notes,
+            notes_message: this.notes_message            
+        }
+
+        this.$store.commit('setWorkItem', workItem)
+    },
     fetchTodos() {
         if(this.todos.length > 0)
             return 
