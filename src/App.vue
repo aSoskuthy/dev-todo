@@ -1,12 +1,36 @@
 <template>
-  <div id="app">
-    <div id="nav">
-      <router-link to="/">Checklist</router-link> |
-      <router-link to="/about">Account</router-link>
-    </div>
-    <router-view/>
+  <v-app>
+  <div id="app"> 
+  <v-toolbar app>
+   <v-toolbar-title>DevCycle</v-toolbar-title>
+   <v-spacer></v-spacer>
+   <v-toolbar-items>
+      <v-btn @click="toChecklist" flat>Checklist</v-btn>
+      <v-btn @click="toAccount" flat>Account</v-btn>     
+    </v-toolbar-items>
+  </v-toolbar>
+  <v-content>
+    <v-container fluid>
+      <router-view></router-view>
+    </v-container>
+  </v-content>
   </div>
+  </v-app>
 </template>
+
+<script>
+export default {
+  name: 'app',
+  methods: {
+    toChecklist() {
+        this.$router.push('/')
+    },
+    toAccount() {
+      this.$router.push('/account')
+    }
+  }
+}
+</script>
 
 <style>
 #app {
