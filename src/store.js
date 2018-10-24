@@ -5,13 +5,24 @@ Vue.use(Vuex)
 
 export default new Vuex.Store({
   state: {
-    workItems: []       
+    workItems: [],
+    todos: []       
   },
   getters: {
-    workItems: (state) => state.workItems
+    workItems: (state) => state.workItems,
+    todos: (state) => state.todos
   },
   mutations: {
-    setWorkItem: (state, workItem) => state.workItems.push(workItem) 
+    setWorkItem: (state, workItem) => {
+      let item = state.workItems.find((item) => item.uniqueNumber === workItem.uniqueNumber)
+      if(item){
+        state.workItems.splice(state.workItems.indexOf(item), 1)
+      }   
+      state.workItems.push(workItem) 
+    },
+    setTodos: (state, todos) => {
+      state.todos = todos
+    } 
     
   },
   actions: {

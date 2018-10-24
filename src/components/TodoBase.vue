@@ -3,17 +3,19 @@
     <v-layout>
       <v-flex  md6 offset-md3>    
         <v-card class="pa-2">             
-        <v-text-field color="teal"  
-        v-model="poNumber"                    
+        <v-text-field color="teal" class="custom-height mb-2"
+        :disabled="readOnly" 
+        v-model="uniqueNumber"                    
         label="Enter PO"
         :append-icon="isValidPO"
         
             outline>
          </v-text-field> 
          <transition name="fade">
-        <v-text-field color="teal"    
-        v-model="poDescription"
-        v-if="poNumber"            
+        <v-text-field color="teal"  class="custom-height mb-2 mt-3"
+        :disabled="readOnly"  
+        v-model="description"
+        v-if="uniqueNumber"            
         label="Enter description"
         :append-icon="isValidDescription"
             outline>
@@ -21,7 +23,7 @@
          </transition>
          <transition name="fade">
         
-        <v-list v-if="poDescription">
+        <v-list v-if="description">
          
           <v-chip :class="isBlackOrWhite" :color="areTodosFinished">{{ doneTodos }} / {{ todos.length}}</v-chip>
       
@@ -30,7 +32,7 @@
             :key="item.id"                       
           >         
            <v-list-tile-avatar>
-              <v-checkbox color="teal"  v-model="item.checked"></v-checkbox>
+              <v-checkbox :disabled="readOnly"  color="teal"  v-model="item.checked"></v-checkbox>
             </v-list-tile-avatar>
 
             <v-list-tile-content>
@@ -39,14 +41,26 @@
           </v-list-tile>
         </v-list>
     </transition>
-    <v-btn  @click="addWorkItem"   v-if="poDescription && poNumber" dark color="teal">
+    <v-btn :disabled="readOnly"   @click="save"   v-if="description && uniqueNumber" dark color="green">
         <v-icon dark>save</v-icon>
     </v-btn>    
-    <v-btn @click="notes = true"   v-if="poDescription && poNumber" dark color="teal">
-      <v-icon dark>note_add</v-icon>
+    <v-btn :disabled="readOnly"  @click="notesDialog = true"   v-if="description && uniqueNumber" dark color="teal">
+      <v-icon v-if="!notes_message" dark>note_add</v-icon>
+      <v-icon v-else dark>edit</v-icon>
     </v-btn>
+    <transition name="fade">
+    <v-alert v-show="readOnly"
+      class="alert-success"
+      :disabled="readOnly" 
+      color="success"
+      icon="check_circle"
+      outline
+    >
+      Item saved successfully
+    </v-alert>
+    </transition >
     <v-dialog
-      v-model="notes"
+      v-model="notesDialog"
       max-width="870"
     >
       <v-card>
@@ -64,7 +78,7 @@
           <v-btn
             color="teal"
             flat="flat"
-            @click="notes = false"
+            @click="notesDialog = false"
           >
             Close
           </v-btn>         
@@ -78,18 +92,24 @@
 </template>
 
 <script>
+import axios from 'axios'
 export default {
+props: ['item'],
 data() {
-    return {       
-        poNumber: null,
-        poDescription: null,
-        todos: [],
-        notes: false,
-        notes_message: null,
-        status: 'active'       
+    return {   
+        id: 0,    
+        uniqueNumber: null,
+        description: null,        
+        notesDialog: false,
+        notes_message: null, 
+        readOnly: false,
+        date: null             
     }    
 },
 computed: {    
+    todos(){
+        return this.$store.getters.todos
+    },
     isBlackOrWhite(){
         return this.doneTodos === this.todos.length ? 'white' : ''
     },
@@ -100,59 +120,94 @@ computed: {
         return this.todos.filter((todo)=> (todo.checked)).length       
     },
     isValidPO() {
-        return this.poNumber ? 'done': ''     
+        return this.uniqueNumber ? 'done': ''     
     },
     isValidDescription() {
-        return this.poDescription ? 'done': ''
+        return this.description ? 'done': ''
     }
 },
 watch: {
-    'poNumber'() {
-         if(!this.poNumber) {             
-             this.poDescription = null
+    'uniqueNumber'() {
+         
+         if(!this.uniqueNumber) {             
+             this.description = null
              this.todos = []
          }else{
              this.fetchTodos()
-         }
+         }         
     }
 },
-methods:{
-    addWorkItem() {
+methods:{    
+    clear(){
+        this.uniqueNumber = null
+        this.description = null
+        this.todos = []
+    },
+    save() {
+        let todos = this.todos
+        
         let workItem = {
-            poNumber: this.poNumber,
-            poDescription: this.poDescription,
+            uniqueNumber: this.uniqueNumber,
+            description: this.description,
             todos: this.todos,
-            notes: this.notes,
-            notes_message: this.notes_message            
-        }
-
-        this.$store.commit('setWorkItem', workItem)
+            notes: this.notesDialog,
+            notes_message: this.notes_message,
+            date: new Date().toJSON().slice(0,10).replace(/-/g,'/')           
+        }        
+        this.readOnly = true        
+        //saving to database
+        setTimeout(()=> {    
+                this.$store.commit('setWorkItem', workItem)            
+                this.clear()
+                this.readOnly = false
+        },  1000)        
     },
     fetchTodos() {
         if(this.todos.length > 0)
             return 
 
-        let todo = {
+    let todo = {
         id: 1,
         checked: false,
+        edit: false,
         name: 'JIRA ticket status changed, assigned to developer'
     }
     let todo2 = {
         id: 2,
         checked: false,
+        edit: false,
         name: 'Feature or Hotfix branch created'
     }
-    this.todos.push(todo)
-    this.todos.push(todo2)
+
+    let todos = [todo, todo2]
+    this.$store.commit('setTodos', todos)
+   
     }
 },
-created(){
-    this.fetchTodos()
+created() {
+
+    if(this.item){
+        this.uniqueNumber = this.item.uniqueNumber
+        this.description = this.item.description
+        this.todos = this.item.todos
+        this.notes_message = this.item.notes_message
+        this.date = this.item.date
+    }else{
+        this.fetchTodos()
+    }
+    
 }
 }
 </script>
 
 <style scoped>
+.custom-height{
+height: 53px;
+}
+.alert-success {
+    border: 2px solid greenyellow;
+    border-radius: 5px;
+}
 .white{
     color: white;
 }

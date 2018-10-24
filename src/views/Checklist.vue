@@ -1,7 +1,7 @@
 <template>
-  <div class="checklist">   
-  <Todo-base />
-  </div>
+<div>  
+  <todo-base :item="item" />
+</div>
 </template>
 
 <script>
@@ -9,14 +9,10 @@ import TodoBase from '@/components/TodoBase.vue'
 // @ is an alias to /src
 
 export default {
-  name: 'checklist',
-  data() {
-    return {
-      todos: []
-    }
-  },
+  props: ['item'],
+  name: 'checklist',  
   components: {
     TodoBase
-  }
+  },  
 }
 </script>

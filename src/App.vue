@@ -24,13 +24,13 @@ export default {
   name: 'app',
   methods: {
     toChecklist() {
-        this.$router.push('/')
+      this.$router.push('/')
     },
     toAccount() {
       this.$router.push('/account')
     },
     toHistory(){
-
+      this.$router.push('/history')
     }
   }
 }
