@@ -1,10 +1,22 @@
 <template>
-     <v-data-table
+<v-card>
+    <v-card-title>
+        History
+    
+    <v-spacer></v-spacer>
+     <v-text-field
+        v-model="search"
+        append-icon="search"
+        label="Search"
+        single-line
+        hide-details
+      ></v-text-field>
+      </v-card-title>
+     <v-data-table hide-actions
     :headers="headers"
     :items="items"   
-    class="elevation-1"
-   
-    
+    :search="search"
+    class="elevation-1" 
   >
     <template slot="items" slot-scope="props">
     <tr style="cursor: pointer" @click="getItem(props.item)">
@@ -17,23 +29,25 @@
       {{  getNumberOfTodos(props.item.todos) / props.item.todos.length  * 100 }} %  
       </td>
       <td class="text-xs-left">{{props.item.date}}</td>
-      <td class="text-xs-left"><v-icon v-if="props.item.notes_message" color="teal">note</v-icon></td>
+      <td class="text-xs-left"><v-icon v-if="!props.item.notesMessage" color="grey">note</v-icon>
+                            <v-icon v-else color="teal">note</v-icon></td>
       </tr>
     </template>
   </v-data-table>
+</v-card>
 </template>
 
 <script>
 export default {
 data(){
     return {
+         search: null,
          headers: [
-            {text: 'PO Number',  align: 'left', sortable: true },
-            { text: 'Description', sortable: true },
-            { text: 'Completion', sortable: false },
-            { text: 'Date', sortable: true },
-            { text: 'Notes', sortable: false }
-          
+            { text: 'PO Number', value:'uniqueNumber',  align: 'left', sortable: Number },
+            { text: 'Description', value: 'description', sortable: true },
+            { text: 'Completion', value: false, sortable: false },
+            { text: 'Date', value: 'date', sortable: true },
+            { text: 'Notes', sortable: false }        
          
         ],
     }
@@ -48,7 +62,10 @@ methods: {
         this.$router.push({name: 'checklist', params: { item: item }})
     },
     getNumberOfTodos(todos){
-        return todos.filter((todo) => todo.checked).length
+        if(todos.length > 0) {
+             return todos.filter((todo) => todo.checked).length
+        }
+        return 0
     }
 },
 

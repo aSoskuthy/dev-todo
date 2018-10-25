@@ -51,7 +51,7 @@ data(){
 computed:{
   todos: {
         get() {
-            return this.$store.getters.todos
+            return this.$store.getters.baseTodos
         },
         set(value) {
             this.$store.commit('setTodos', value)

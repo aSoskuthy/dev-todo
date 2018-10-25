@@ -45,7 +45,7 @@
         <v-icon dark>save</v-icon>
     </v-btn>    
     <v-btn :disabled="readOnly"  @click="notesDialog = true"   v-if="description && uniqueNumber" dark color="teal">
-      <v-icon v-if="!notes_message" dark>note_add</v-icon>
+      <v-icon v-if="!notesMessage" dark>note_add</v-icon>
       <v-icon v-else dark>edit</v-icon>
     </v-btn>
     <transition name="fade">
@@ -68,7 +68,7 @@
 
         <v-card-text>
            <v-textarea        
-          v-model="notes_message"          
+          v-model="notesMessage"          
         ></v-textarea>
         </v-card-text>
 
@@ -101,14 +101,15 @@ data() {
         uniqueNumber: null,
         description: null,        
         notesDialog: false,
-        notes_message: null, 
+        notesMessage: null, 
+        todos: [],
         readOnly: false,
         date: null             
     }    
 },
 computed: {    
-    todos(){
-        return this.$store.getters.todos
+    baseTodos() {
+        return this.$store.getters.baseTodos
     },
     isBlackOrWhite(){
         return this.doneTodos === this.todos.length ? 'white' : ''
@@ -126,32 +127,20 @@ computed: {
         return this.description ? 'done': ''
     }
 },
-watch: {
-    'uniqueNumber'() {
-         
-         if(!this.uniqueNumber) {             
-             this.description = null
-             this.todos = []
-         }else{
-             this.fetchTodos()
-         }         
-    }
-},
 methods:{    
     clear(){
         this.uniqueNumber = null
         this.description = null
-        this.todos = []
-    },
-    save() {
-        let todos = this.todos
-        
+        this.todos = this.baseTodos.map(x => ({...x}))
+    },    
+    save() {       
+      
         let workItem = {
             uniqueNumber: this.uniqueNumber,
             description: this.description,
             todos: this.todos,
             notes: this.notesDialog,
-            notes_message: this.notes_message,
+            notesMessage: this.notesMessage,
             date: new Date().toJSON().slice(0,10).replace(/-/g,'/')           
         }        
         this.readOnly = true        
@@ -160,40 +149,20 @@ methods:{
                 this.$store.commit('setWorkItem', workItem)            
                 this.clear()
                 this.readOnly = false
-        },  1000)        
-    },
-    fetchTodos() {
-        if(this.todos.length > 0)
-            return 
-
-    let todo = {
-        id: 1,
-        checked: false,
-        edit: false,
-        name: 'JIRA ticket status changed, assigned to developer'
-    }
-    let todo2 = {
-        id: 2,
-        checked: false,
-        edit: false,
-        name: 'Feature or Hotfix branch created'
-    }
-
-    let todos = [todo, todo2]
-    this.$store.commit('setTodos', todos)
-   
-    }
+        },  300)        
+    }    
 },
 created() {
-
+ 
     if(this.item){
         this.uniqueNumber = this.item.uniqueNumber
         this.description = this.item.description
         this.todos = this.item.todos
-        this.notes_message = this.item.notes_message
+        this.notesMessage = this.item.notesMessage
         this.date = this.item.date
     }else{
-        this.fetchTodos()
+        // copy of an array (without reference) and a copy of every object without one level of references.
+        this.todos = this.baseTodos.map(x => ({...x}))
     }
     
 }
