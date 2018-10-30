@@ -5,14 +5,15 @@
    <v-toolbar-title><v-icon color="teal" large>done_all</v-icon></v-toolbar-title>
    <v-spacer></v-spacer>
    <v-toolbar-items>
-      <v-btn @click="toChecklist" color="teal" flat><v-icon >check_circle</v-icon></v-btn>    
-      <v-btn @click="toHistory" color="teal" flat><v-icon >history</v-icon></v-btn>    
+      <v-btn v-if="currentUser" @click="toChecklist" color="teal" flat><v-icon >check_circle</v-icon></v-btn>    
+      <v-btn v-if="currentUser" @click="toHistory" color="teal" flat><v-icon >history</v-icon></v-btn>    
       <v-btn @click="toAccount" color="teal" flat><v-icon >account_circle</v-icon></v-btn>     
+      <v-btn v-if="currentUser" @click="signOut" color="teal" flat><v-icon >exit_to_app</v-icon></v-btn>   
     </v-toolbar-items>
   </v-toolbar>
   <v-content>
     <v-container fluid>
-      <router-view></router-view>
+      <router-view :key="$route.fullPath"></router-view>
     </v-container>
   </v-content>
   </div>
@@ -20,23 +21,51 @@
 </template>
 
 <script>
+import firebase from 'firebase'
+
 export default {
   name: 'app',
   methods: {
     toChecklist() {
-      this.$router.push('/')
+      this.$router.replace('/')
     },
     toAccount() {
-      this.$router.push('/account')
+      this.$router.replace('/account')
     },
     toHistory(){
-      this.$router.push('/history')
+      this.$router.replace('/history')
+    },
+    signOut(){
+      firebase.auth().signOut().then(() =>{  
+        this.$store.commit('clearCurrentUser')    
+        this.$router.replace('/account')
+      })
     }
-  }
+  },
+  computed: {
+    currentUser(){
+      return this.$store.getters.currentUser
+    }
+  },
+  created() {
+    // in case user did not sign out from browser, but refreshed
+    if(!this.currentUser && firebase.auth().currentUser){
+      this.$store.commit('setCurrentUser', firebase.auth().currentUser)
+    }
+  }  
 }
 </script>
 
 <style>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s;
+}
+.fade-enter,
+.fade-leave-to {
+  opacity: 0;
+}
+
 #app {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;

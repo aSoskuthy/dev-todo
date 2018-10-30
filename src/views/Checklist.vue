@@ -13,6 +13,7 @@ export default {
   name: 'checklist',  
   components: {
     TodoBase
-  },  
+  }, 
+  
 }
 </script>

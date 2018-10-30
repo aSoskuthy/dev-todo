@@ -1,10 +1,10 @@
 <template>
 <v-card>
     <v-card-title>
-        History
-    
+        <v-icon color="teal" large>history</v-icon>     
     <v-spacer></v-spacer>
      <v-text-field
+        color="teal"
         v-model="search"
         append-icon="search"
         label="Search"
@@ -12,11 +12,14 @@
         hide-details
       ></v-text-field>
       </v-card-title>
-     <v-data-table hide-actions
-    :headers="headers"
-    :items="items"   
-    :search="search"
-    class="elevation-1" 
+     <v-data-table 
+        hide-actions
+        class="elevation-1" 
+        :loading="loading"
+        :headers="headers"
+        :items="items"   
+        :search="search"
+    
   >
     <template slot="items" slot-scope="props">
     <tr style="cursor: pointer" @click="getItem(props.item)">
@@ -38,12 +41,15 @@
 </template>
 
 <script>
+import db from '@/firebase'
+
 export default {
 data(){
     return {
+         loading: true,
          search: null,
          headers: [
-            { text: 'PO Number', value:'uniqueNumber',  align: 'left', sortable: Number },
+            { text: 'PO Number', value:'uniqueNumber',  align: 'left', sortable: true },
             { text: 'Description', value: 'description', sortable: true },
             { text: 'Completion', value: false, sortable: false },
             { text: 'Date', value: 'date', sortable: true },
@@ -55,6 +61,9 @@ data(){
 computed: {
     items() {
         return this.$store.getters.workItems
+    },
+    currentUser(){
+        return this.$store.getters.currentUser
     }
 },
 methods: {
@@ -66,9 +75,16 @@ methods: {
              return todos.filter((todo) => todo.checked).length
         }
         return 0
+    },    
+    async fetchWorkItems(){
+        this.loading = true        
+        await this.$store.dispatch('fetchWorkItems', this.currentUser.user.uid)
+        this.loading = false  
     }
 },
-
+created() {
+     this.fetchWorkItems()    
+}
 }
 </script>
 
