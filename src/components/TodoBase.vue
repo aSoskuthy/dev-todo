@@ -170,7 +170,6 @@ export default {
       this.isUniqueNumberEditable = false
       this.isDescriptionEditable = false
     } else {
-
       const todos = this.baseTodos.map(x => ({ ...x }));
       this.todos = todos;
       this.isUniqueNumberEditable = true

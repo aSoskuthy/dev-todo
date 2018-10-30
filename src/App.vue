@@ -1,8 +1,9 @@
 <template>
   <v-app>
   <div id="app"> 
-  <v-toolbar app>
-   <v-toolbar-title><v-icon color="teal" large>done_all</v-icon></v-toolbar-title>
+  <v-toolbar app>  
+    <v-icon color="teal" large> done_all</v-icon>
+    <v-toolbar-title style="color: teal; font-size: 24px"></v-toolbar-title>  
    <v-spacer></v-spacer>
    <v-toolbar-items>
       <v-btn v-if="currentUser" @click="toChecklist" color="teal" flat><v-icon >check_circle</v-icon></v-btn>    
@@ -42,7 +43,7 @@ export default {
       })
     }
   },
-  computed: {
+  computed: {   
     currentUser(){
       return this.$store.getters.currentUser
     }

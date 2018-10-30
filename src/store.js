@@ -25,13 +25,11 @@ export default new Vuex.Store({
       }
     },
     clearWorkItems: (state) => state.workItems = [],
-    setTodos: (state, todos) => {
-      console.log('setting base todos')
+    setTodos: (state, todos) => {      
       state.baseTodos = todos
     },
     setCurrentUser: (state, user) => state.currentUser = user,
     clearCurrentUser: (state) => state.currentUser = null
-
   },
   actions: {
     async deleteTodos(){
@@ -43,33 +41,40 @@ export default new Vuex.Store({
     async addTodos({commit, dispatch}, todos){
       commit('setTodos', todos)
       await dispatch('deleteTodos')
-      todos.forEach(async (todo)=>{
-        let ref = await db.collection('baseTodos').add(todo)
-        console.log('added: ', ref)
-        
+      todos.forEach(async (todo)=> {
+         await db.collection('baseTodos').add(todo)      
       })
       
     },
-    async fetchBaseTodos({commit}){
-      console.log('called fetchbase todos')
+    async fetchBaseTodos({commit}){      
       let todos = []
       let baseTodosQuery = await db.collection('baseTodos').get()
-      baseTodosQuery.forEach((s)=> {          
-          todos.push({...s.data(), id: s.id})       
-      })     
+      baseTodosQuery.forEach(
+        (s)=> {          
+          todos.push(
+            { ...s.data(),
+               id: s.id}
+          )       
+      })    
     
       commit('setTodos', todos)
     },
-    async saveWorkItem({ commit, state }, workItem) {
-      let found = state.workItems.find(x => x.uniqueNumber === workItem.uniqueNumber)
-      if (found) {
-        await db.collection('workItems').doc(found.id).update(workItem)
-      } else {
-        let itemRef = await db.collection('workItems').add(workItem)
+    async updateWorkItem(workItem){
+      await db.collection('workItems').doc(found.id).update(workItem)
+    },
+    async addWorkItem(workItem){
+      let itemRef = await db.collection('workItems').add(workItem)
         commit('setWorkItem', {
           ...workItem,
           id: itemRef.id
         })
+    },
+    async saveWorkItem({ commit, dispatch, state }, workItem) {
+      let isExistingWorkItem = state.workItems.find(x => x.uniqueNumber === workItem.uniqueNumber)
+      if (isExistingWorkItem) {
+        await dispatch('updateWorkItem', workItem)
+      } else {
+        await dispatch('addWorkItem', workItem)
       }
     },
     async fetchWorkItems({ commit }, userId) {
