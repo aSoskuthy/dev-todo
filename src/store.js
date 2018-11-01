@@ -14,6 +14,7 @@ export default new Vuex.Store({
     workItems: (state) => state.workItems,
     baseTodos: (state) => state.baseTodos,
     currentUser: (state) => state.currentUser,   
+    getUserId: (state) => state.currentUser.user.uid
   },
   mutations: {
     setWorkItem: (state, workItem) => {
@@ -27,22 +28,35 @@ export default new Vuex.Store({
     clearWorkItems: (state) => state.workItems = [],
     setTodos: (state, todos) => {      
       state.baseTodos = todos
-    },
-    CREATE_TASK: (state, task) => state.baseTodos.push(task),
+    },    
     setCurrentUser: (state, user) => state.currentUser = user,
     clearCurrentUser: (state) => state.currentUser = null,
-    UPDATE_TASKS: (state, tasks) => state.tasks = tasks
+    CREATE_TASK: (state, task) => state.baseTodos.push(task),
+    DELETE_TASKS: (state) => state.baseTodos = [] 
+   
   },
   actions: {
-    async updateTasksOrder({commit}, tasks){
+    async fetchTasks({commit, state}) {      
+      commit('DELETE_TASKS')
+      let tasksRef = await db.collection('baseTodos')
+        .where('userId', '==', state.currentUser.user.uid)
+        .get()      
+      tasksRef.forEach((t)=> {     
+          commit('CREATE_TASK', {
+            ...t.data(),
+            id: t.id
+          })  
+        })        
+      
+    },
+    async updateTasksOrder(tasks){
      const batch = db.batch()
      tasks.forEach(task => {
        let ref = db.collection('baseTodos').doc(task.id)
        batch.update(ref, { order: task.order})       
      })     
      try{
-      await batch.commit()
-      commit('UPDATE_TASKS')
+      await batch.commit()      
      }catch(error){
        console.log('Error updating tasks', error)
      }     
@@ -63,8 +77,7 @@ export default new Vuex.Store({
     },
     async updateTaskText({commit}, task){
       try{
-        await db.collection('baseTodos').doc(task.id).update({text: task.text})
-        commit('UPDATE_TASK_TEXT', task)
+        await db.collection('baseTodos').doc(task.id).update({text: task.text})        
       }catch(error){
         console.log('Failed to update task', error)
       }

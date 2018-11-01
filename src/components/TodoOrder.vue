@@ -26,7 +26,7 @@
 
             <v-list-tile-avatar >
               <v-icon @click="item.edit = true, shouldPauseDraggable = true"  color="teal"  v-if="!item.edit">edit</v-icon>
-              <v-icon @click="save(item), shouldPauseDraggable = false" color="teal" v-else>save</v-icon>
+              <v-icon @click="updateTask(item), shouldPauseDraggable = false" color="teal" v-else>save</v-icon>
             </v-list-tile-avatar>
           </v-list-tile>
           <v-list-tile @mouseover="pauseDraggable">
@@ -34,12 +34,12 @@
               {{ todos.length + 1 }}.
             </v-list-tile-action>
              <v-list-tile-content>
-                           <v-text-field style="width: 100%" color="teal"  small v-model="todo.text"
+                           <v-text-field style="width: 100%" color="teal"  small v-model="task.text"
              ></v-text-field>
             </v-list-tile-content>    
              <v-list-tile-avatar >      
-              <v-icon v-if="!todo.text" color="grey">save</v-icon>        
-              <v-icon v-else @click="add()" color="teal">save</v-icon>
+              <v-icon v-if="!task.text" color="grey">save</v-icon>        
+              <v-icon v-else @click="newTask()" color="teal">save</v-icon>
             </v-list-tile-avatar>      
           </v-list-tile>
         </draggable>
@@ -50,13 +50,13 @@
 <script>
 import draggable from 'vuedraggable'
 import Login from '@/components/Login'
-import { mapActions } from 'vuex';
+import { mapActions, mapGetters } from 'vuex';
 
 export default {
 data(){
   return {    
     shouldPauseDraggable: true,
-    todo: {
+    task: {
       text: '',
       checked: false,
       edit: false,
@@ -64,7 +64,10 @@ data(){
     }
   }
 },
-computed:{
+computed:{  
+  ...mapGetters({
+    userId: 'getUserId'
+  }),
   todos: {
         get() {
             return this.$store.getters.baseTodos.sort((a,b) => a.order - b.order)
@@ -72,50 +75,47 @@ computed:{
         set(value) {       
               this.reOrderTasks(value)                       
         }
-}
+  }
 },
 components: {
   draggable  
 },
-methods:{
-  async reOrderTasks(tasks){    
-    for(let i = 0; i <= tasks.length-1; i++)
-    {
-      tasks[i].order = i
-    }
-
-    await this.updateTasks(tasks)   
-  },
+methods:{ 
   pauseDraggable() {
     this.shouldPauseDraggable = true
   },
   startDraggable() {    
     this.shouldPauseDraggable = false
   },
-  async add() {
-    const newTodo = {...this.todo}
-    await this.createTask(newTodo)
-    this.todo.text = ''
+  async reOrderTasks(tasks){    
+    for(let i = 0; i <= tasks.length-1; i++)
+    {
+      tasks[i].order = i
+    }
+    await this.updateTasks(tasks)   
   },
-  async updateTask(item){
-    try{
-      item.edit = false
-      await this.updateTask(item)
-    }catch(error){
-      console.log(error)
-    }    
-      
+  async newTask() {
+    const newTask = {
+      ...this.task,
+      userId: this.userId
+    }
+    await this.createTask(newTask)
+    this.task.text = ''
+  },
+  async updateTask(item){    
+    item.edit = false
+    await this.updateTaskText(item)          
   },
   ...mapActions({
-    fetchTodos: 'fetchBaseTodos',
-    updateTask: 'updateTaskText',
+    fetchTasks: 'fetchTasks',
+    updateTaskText: 'updateTaskText',
     createTask: 'createTask',
-    updateTasks: 'updateTasksOrder'
+    updateTasks: 'updateTasksOrder'    
   })
 },
 created(){
   try{
-    this.fetchTodos()
+    this.fetchTasks()
   }catch(error){
     console.log(error)
   }

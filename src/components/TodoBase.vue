@@ -31,7 +31,7 @@
                     <v-checkbox :disabled="disableAll"  color="teal"  v-model="item.checked"></v-checkbox>
                 </v-list-tile-avatar>
                 <v-list-tile-content>
-                <v-list-tile-title  class="mt-1" :class="{ 'done-todo': item.checked }" v-text="item.name"></v-list-tile-title>
+                <v-list-tile-title  class="mt-1" :class="{ 'done-todo': item.checked }" v-text="item.text"></v-list-tile-title>
                 </v-list-tile-content>
                 </v-list-tile>
             </v-list>
@@ -154,8 +154,7 @@ export default {
                 .slice(0, 10)
                 .replace(/-/g, "/")
       }
-      await this.fetchWorkItems(this.currentUser.user.uid)
-     
+      await this.fetchWorkItems(this.currentUser.user.uid)     
       await this.saveWorkItem(workItem)                  
       this.clear()
       this.disableAll = false
