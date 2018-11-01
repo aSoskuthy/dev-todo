@@ -28,7 +28,7 @@ export default {
   name: 'app',
   methods: {
     toChecklist() {
-      this.$router.replace('/')
+      this.$router.replace({name: 'checklist'})
     },
     toAccount() {
       this.$router.replace('/account')
@@ -42,16 +42,15 @@ export default {
         this.$router.replace('/account')
       })
     }
-  },
+  },  
   computed: {   
     currentUser(){
       return this.$store.getters.currentUser
     }
   },
-  created() {
-    // in case user did not sign out from browser, but refreshed
+  created() {    
     if(!this.currentUser && firebase.auth().currentUser){
-      this.$store.commit('setCurrentUser', firebase.auth().currentUser)
+       this.$store.state.currentUser = firebase.auth().currentUser.user
     }
   }  
 }

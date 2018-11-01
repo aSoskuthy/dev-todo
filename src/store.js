@@ -6,14 +6,14 @@ Vue.use(Vuex)
 
 export default new Vuex.Store({
   state: {
-    currentUser: null,
+    currentUser: null,      
     workItems: [],
     baseTodos: []    
   },
   getters: {
     workItems: (state) => state.workItems,
     baseTodos: (state) => state.baseTodos,
-    currentUser: (state) => state.currentUser
+    currentUser: (state) => state.currentUser,   
   },
   mutations: {
     setWorkItem: (state, workItem) => {
@@ -28,22 +28,46 @@ export default new Vuex.Store({
     setTodos: (state, todos) => {      
       state.baseTodos = todos
     },
+    CREATE_TASK: (state, task) => state.baseTodos.push(task),
     setCurrentUser: (state, user) => state.currentUser = user,
-    clearCurrentUser: (state) => state.currentUser = null
+    clearCurrentUser: (state) => state.currentUser = null,
+    UPDATE_TASKS: (state, tasks) => state.tasks = tasks
   },
   actions: {
-    async deleteTodos(){
-     let todos = await db.collection('baseTodos').get()
-     todos.forEach((todo)=>{
-       db.collection('baseTodos').doc(todo.id).delete()
-     })
+    async updateTasksOrder({commit}, tasks){
+     const batch = db.batch()
+     tasks.forEach(task => {
+       let ref = db.collection('baseTodos').doc(task.id)
+       batch.update(ref, { order: task.order})       
+     })     
+     try{
+      await batch.commit()
+      commit('UPDATE_TASKS')
+     }catch(error){
+       console.log('Error updating tasks', error)
+     }     
+    },    
+    async createTask({commit, state}, task) { 
+      const orderOfTask = state.baseTodos.length 
+      const newTask = { 
+        ...task, 
+        order: orderOfTask 
+      }  
+      try {
+        const taskRef = await db.collection('baseTodos').add(newTask)
+        newTask.id = taskRef.id
+        commit('CREATE_TASK', newTask)  
+      }catch(error){
+        console.log('Failed to create task', error)
+      }    
     },
-    async addTodos({commit, dispatch}, todos){
-      commit('setTodos', todos)
-      await dispatch('deleteTodos')
-      todos.forEach(async (todo)=> {
-         await db.collection('baseTodos').add(todo)      
-      })
+    async updateTaskText({commit}, task){
+      try{
+        await db.collection('baseTodos').doc(task.id).update({text: task.text})
+        commit('UPDATE_TASK_TEXT', task)
+      }catch(error){
+        console.log('Failed to update task', error)
+      }
       
     },
     async fetchBaseTodos({commit}){      
@@ -59,10 +83,13 @@ export default new Vuex.Store({
     
       commit('setTodos', todos)
     },
-    async updateWorkItem(workItem){
-      await db.collection('workItems').doc(found.id).update(workItem)
+    async updateWorkItem({commit}, workItem){
+      await db.collection('workItems').doc(workItem.id).update(workItem)
+      commit('setWorkItem', {
+        ...workItem
+      })
     },
-    async addWorkItem(workItem){
+    async addWorkItem({commit}, workItem){
       let itemRef = await db.collection('workItems').add(workItem)
         commit('setWorkItem', {
           ...workItem,
@@ -70,14 +97,14 @@ export default new Vuex.Store({
         })
     },
     async saveWorkItem({ commit, dispatch, state }, workItem) {
-      let isExistingWorkItem = state.workItems.find(x => x.uniqueNumber === workItem.uniqueNumber)
-      if (isExistingWorkItem) {
-        await dispatch('updateWorkItem', workItem)
-      } else {
+      let existingWorkItem = state.workItems.find(x => x.uniqueNumber === workItem.uniqueNumber)
+      if (existingWorkItem) {
+        await dispatch('updateWorkItem', {...workItem, id: existingWorkItem.id})        
+      } else {      
         await dispatch('addWorkItem', workItem)
       }
     },
-    async fetchWorkItems({ commit }, userId) {
+    async fetchWorkItems({ commit }, userId) {      
       let workItems = await db.collection('workItems').where('userId', '==', userId).get()
       workItems.forEach(item => 
         commit('setWorkItem', {

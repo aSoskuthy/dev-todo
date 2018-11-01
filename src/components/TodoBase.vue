@@ -131,6 +131,7 @@ export default {
   },   
   methods: {
     ...mapActions({
+      fetchBaseTodos: 'fetchBaseTodos',
       fetchWorkItems: 'fetchWorkItems',
       saveWorkItem: 'saveWorkItem'
     }),
@@ -154,13 +155,14 @@ export default {
                 .replace(/-/g, "/")
       }
       await this.fetchWorkItems(this.currentUser.user.uid)
+     
       await this.saveWorkItem(workItem)                  
       this.clear()
       this.disableAll = false
            
     }
   },
-  created() {
+  async created() {
     if (this.item) {
       this.uniqueNumber = this.item.uniqueNumber
       this.description = this.item.description
@@ -170,6 +172,7 @@ export default {
       this.isUniqueNumberEditable = false
       this.isDescriptionEditable = false
     } else {
+      await this.fetchBaseTodos()
       const todos = this.baseTodos.map(x => ({ ...x }));
       this.todos = todos;
       this.isUniqueNumberEditable = true

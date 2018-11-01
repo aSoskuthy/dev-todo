@@ -13,7 +13,7 @@
       ></v-text-field>
       </v-card-title>
      <v-data-table 
-        hide-actions
+      
         class="elevation-1" 
         :loading="loading"
         :headers="headers"
