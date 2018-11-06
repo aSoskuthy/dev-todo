@@ -44,15 +44,11 @@ computed:{
     }
 },
 methods: {
-    login(){        
-        firebase.auth().signInWithEmailAndPassword(this.email, this.password).then(
-        (user) => {      
-            this.$store.commit('setCurrentUser', user)
-            this.$router.push('/')
-        },
-        (err) => {            
-            alert('Ooops. ' + err.message)
-        })
+    async login(){               
+        const user = await firebase.auth().signInWithEmailAndPassword(this.email, this.password)
+        this.$store.commit('setCurrentUser', user)
+        await this.$store.dispatch('fetchTasks')        
+        this.$router.push('/history')       
     }
 }
 

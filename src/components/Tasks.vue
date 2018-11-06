@@ -1,10 +1,14 @@
 <template>
-<v-card>
+<v-card>   
         <v-toolbar color="teal" dark>        
           <v-toolbar-title>Change order or description</v-toolbar-title>
         </v-toolbar>
 
-        <v-list>
+        <v-progress-circular class="ma-3" small v-if="!fetchComplete"
+      indeterminate
+      color="teal"
+    ></v-progress-circular>
+        <v-list v-else>
         <draggable :options="{'disabled': shouldPauseDraggable}" v-model="todos" @start="drag=true" @end="drag=false">
           <v-list-tile @mouseover="startDraggable" style="cursor: pointer" 
             v-for="item in todos"
@@ -56,6 +60,7 @@ export default {
 data(){
   return {    
     shouldPauseDraggable: true,
+    fetchComplete: true,
     task: {
       text: '',
       checked: false,
@@ -92,6 +97,7 @@ methods:{
     {
       tasks[i].order = i
     }
+    
     await this.updateTasks(tasks)   
   },
   async newTask() {
@@ -113,14 +119,6 @@ methods:{
     updateTasks: 'updateTasksOrder'    
   })
 },
-created(){
-  try{
-    this.fetchTasks()
-  }catch(error){
-    console.log(error)
-  }
-  
-}
 
 }
 </script>

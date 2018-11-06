@@ -1,9 +1,9 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import Checklist from './views/Checklist.vue'
-import Account from './views/Account.vue'
-import History from './views/History.vue'
-import firebase from 'firebase'
+import WorkItemView from '@/views/WorkItemView'
+import AccountView from '@/views/AccountView'
+import WorkItemsView from '@/views/WorkItemsView'
+import store from '@/store'
 
 Vue.use(Router)
 
@@ -15,8 +15,8 @@ let router = new Router({
     },
     {
       path: '/',
-      name: 'checklist',
-      component: Checklist,
+      name: 'editWorkItem',
+      component: WorkItemView,
       props: true,
       meta: {
         requiresAuth: true
@@ -25,12 +25,12 @@ let router = new Router({
     {
       path: '/account',
       name: 'account',     
-      component: Account
+      component: AccountView
     },
     {
       path: '/history',
       name: 'history',     
-      component: History,
+      component: WorkItemsView,
       meta: {
         requiresAuth: true
       }
@@ -40,9 +40,8 @@ let router = new Router({
 
 router.beforeEach((to, from, next) =>{
 
-let currentUser = firebase.auth().currentUser
+let currentUser = store.getters.currentUser
 let requiresAuth = to.matched.some(record => record.meta.requiresAuth)
-
 
 if(requiresAuth && !currentUser) 
   next('account')

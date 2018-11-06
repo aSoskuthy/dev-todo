@@ -108,7 +108,7 @@ export default {
   },  
   computed: {
     baseTodos() {
-      return this.$store.getters.baseTodos;
+      return this.$store.getters.baseTodos.sort((a,b) => a-b);
     },
     isBlackOrWhite() {
       return this.doneTodos === this.todos.length ? "white" : ""
@@ -131,11 +131,11 @@ export default {
   },   
   methods: {
     ...mapActions({
-      fetchBaseTodos: 'fetchBaseTodos',
+      fetchTasks: 'fetchTasks',
       fetchWorkItems: 'fetchWorkItems',
       saveWorkItem: 'saveWorkItem'
     }),
-    clear() {
+    resetWorkItem() {
       this.uniqueNumber = null;
       this.description = null;
       this.todos = this.baseTodos.map(x => ({ ...x }));
@@ -154,24 +154,25 @@ export default {
                 .slice(0, 10)
                 .replace(/-/g, "/")
       }
-      await this.fetchWorkItems(this.currentUser.user.uid)     
+          
       await this.saveWorkItem(workItem)                  
-      this.clear()
-      this.disableAll = false
-           
-    }
-  },
-  async created() {
-    if (this.item) {
-      this.uniqueNumber = this.item.uniqueNumber
-      this.description = this.item.description
-      this.todos = this.item.todos
-      this.notesMessage = this.item.notesMessage
-      this.date = this.item.date
+      this.resetWorkItem()
+      this.disableAll = false           
+    },
+    loadExistingWorkItem(workItem){
+      this.uniqueNumber = workItem.uniqueNumber
+      this.description = workItem.description
+      this.todos = workItem.todos
+      this.notesMessage = workItem.notesMessage
+      this.date = workItem.date
       this.isUniqueNumberEditable = false
       this.isDescriptionEditable = false
-    } else {
-      await this.fetchBaseTodos()
+  }
+  },  
+  async created() {
+    if (this.item) {
+      this.loadExistingWorkItem(this.item)      
+    } else {      
       const todos = this.baseTodos.map(x => ({ ...x }));
       this.todos = todos;
       this.isUniqueNumberEditable = true

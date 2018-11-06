@@ -28,7 +28,7 @@ export default {
   name: 'app',
   methods: {
     toChecklist() {
-      this.$router.replace({name: 'checklist'})
+      this.$router.replace({name: 'editWorkItem'})
     },
     toAccount() {
       this.$router.replace('/account')
@@ -36,21 +36,16 @@ export default {
     toHistory(){
       this.$router.replace('/history')
     },
-    signOut(){
-      firebase.auth().signOut().then(() =>{  
-        this.$store.commit('clearCurrentUser')    
-        this.$router.replace('/account')
-      })
+    async signOut(){
+      await firebase.auth().signOut()
+      this.$store.commit('clearCurrentUser')    
+      this.$router.replace('/history')
+      
     }
   },  
   computed: {   
     currentUser(){
       return this.$store.getters.currentUser
-    }
-  },
-  created() {    
-    if(!this.currentUser && firebase.auth().currentUser){
-       this.$store.state.currentUser = firebase.auth().currentUser.user
     }
   }  
 }

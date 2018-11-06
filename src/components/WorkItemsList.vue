@@ -12,28 +12,33 @@
         hide-details
       ></v-text-field>
       </v-card-title>
-     <v-data-table 
-      
+     <v-data-table     
         class="elevation-1" 
         :loading="loading"
         :headers="headers"
         :items="items"   
-        :search="search"
-    
+        :search="search"   
   >
     <template slot="items" slot-scope="props">
-    <tr style="cursor: pointer" @click="getItem(props.item)">
+    <tr style="cursor: pointer" 
+        @click="getItem(props.item)">
       <td class="text-xs-left">{{ props.item.uniqueNumber }}</td>
       <td class="text-xs-left">{{ props.item.description }}</td>      
       <td class="text-xs-left">
-     <v-icon color="teal" 
+     <v-icon
       small 
-      v-for="n in getNumberOfTodos(props.item.todos)" :key="n">grade</v-icon> 
-      {{  getNumberOfTodos(props.item.todos) / props.item.todos.length  * 100 }} %  
+      v-for="todo in props.item.todos"
+      :color="setColor(todo)" 
+      :key="todo.date">grade</v-icon>       
+      {{ getPercentage(props.item.todos)  }} %  
       </td>
       <td class="text-xs-left">{{props.item.date}}</td>
-      <td class="text-xs-left"><v-icon v-if="!props.item.notesMessage" color="grey">note</v-icon>
-                            <v-icon v-else color="teal">note</v-icon></td>
+      <td class="text-xs-left">
+          <v-icon v-if="!props.item.notesMessage" 
+                :color="defaultColor">note</v-icon>
+          <v-icon v-else 
+                :color="successColor">note</v-icon>
+      </td>
       </tr>
     </template>
   </v-data-table>
@@ -46,6 +51,8 @@ import db from '@/firebase'
 export default {
 data(){
     return {
+         successColor:'teal',
+         defaultColor: 'grey',
          loading: true,
          search: null,
          headers: [
@@ -67,10 +74,16 @@ computed: {
     }
 },
 methods: {
-    getItem(item){
-        this.$router.push({name: 'checklist', params: { item: item }})
+    getPercentage(tasks){
+        return this.getTasksDone(tasks) / tasks.length  * 100 
     },
-    getNumberOfTodos(todos){
+    setColor(todo){
+        return todo.checked ? this.successColor : this.defaultColor
+    },
+    getItem(item){
+        this.$router.push({name: 'editWorkItem', params: { item: item }})
+    },
+    getTasksDone(todos){
         if(todos.length > 0) {
              return todos.filter((todo) => todo.checked).length
         }

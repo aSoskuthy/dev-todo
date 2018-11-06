@@ -14,7 +14,7 @@ export default new Vuex.Store({
     workItems: (state) => state.workItems,
     baseTodos: (state) => state.baseTodos,
     currentUser: (state) => state.currentUser,   
-    getUserId: (state) => state.currentUser.user.uid
+    getUserId: (state) => state.currentUser ? state.currentUser.user.uid : null
   },
   mutations: {
     setWorkItem: (state, workItem) => {
@@ -30,33 +30,51 @@ export default new Vuex.Store({
       state.baseTodos = todos
     },    
     setCurrentUser: (state, user) => state.currentUser = user,
-    clearCurrentUser: (state) => state.currentUser = null,
-    CREATE_TASK: (state, task) => state.baseTodos.push(task),
-    DELETE_TASKS: (state) => state.baseTodos = [] 
+    clearCurrentUser: (state) => {
+      state.currentUser = null
+    },
+    CREATE_TASK: (state, task) => {
+      state.baseTodos.push(task)
+    }, 
+    DELETE_TASKS: (state) =>{
+      state.baseTodos = [] 
+    } 
    
   },
   actions: {
-    async fetchTasks({commit, state}) {      
+    async fetchTasks({commit, state}) { 
+      console.log('store: fetch/task')     
       commit('DELETE_TASKS')
+      console.log('store: DELETE_TASKS from fetchTasks', state.baseTodos)
       let tasksRef = await db.collection('baseTodos')
         .where('userId', '==', state.currentUser.user.uid)
         .get()      
       tasksRef.forEach((t)=> {     
+          console.log('store: commiting new task from fetch', t.data())
           commit('CREATE_TASK', {
             ...t.data(),
             id: t.id
           })  
-        })        
+        })       
       
     },
-    async updateTasksOrder(tasks){
+    async updateTasksOrder({commit}, tasks){
+    console.log('store: updateTaskOrder')
      const batch = db.batch()
      tasks.forEach(task => {
        let ref = db.collection('baseTodos').doc(task.id)
        batch.update(ref, { order: task.order})       
      })     
      try{
-      await batch.commit()      
+       await batch.commit()      
+       commit('DELETE_TASKS')
+       console.log('store: DELETE_TASKS from updateTasksOrder')
+       tasks.forEach((task) =>{
+        console.log('store: commiting new task from updateTasksOrder', task)
+         commit('CREATE_TASK', {
+           ...task
+         })
+       })
      }catch(error){
        console.log('Error updating tasks', error)
      }     
