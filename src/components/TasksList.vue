@@ -1,7 +1,7 @@
 <template>
 <v-card>   
         <v-toolbar color="teal" dark>        
-          <v-toolbar-title>Change order or description</v-toolbar-title>
+          <v-toolbar-title>Drag to change order, or click <v-icon  dark>edit</v-icon> description</v-toolbar-title>
         </v-toolbar>       
         <v-list>
         <draggable :options="{'disabled': shouldPauseDraggable}" v-model="todos" @start="drag=true" @end="drag=false">
@@ -69,7 +69,7 @@ computed:{
   }),
   todos: {
         get() {
-            return this.$store.getters.baseTodos.sort((a,b) => a.order - b.order)
+            return this.$store.getters.userTasks.sort((a,b) => a.order - b.order)
         },
         set(value) {       
               this.reOrderTasks(value)                       
@@ -92,7 +92,7 @@ methods:{
       tasks[i].order = i
     }
     
-    await this.updateTasks(tasks)   
+    await this.updateTaskOrder(tasks)   
   },
   async newTask() {
     const newTask = {
@@ -110,7 +110,7 @@ methods:{
     fetchTasks: 'fetchTasks',
     updateTaskText: 'updateTaskText',
     createTask: 'createTask',
-    updateTasks: 'updateTasksOrder'    
+    updateTaskOrder: 'updateTaskOrder'    
   })
 },
 async created(){

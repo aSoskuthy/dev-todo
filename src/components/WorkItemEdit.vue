@@ -3,17 +3,22 @@
     <v-layout>
       <v-flex  md6 offset-md3>    
         <v-card class="pa-2">             
-            <v-text-field color="teal" class="custom-height mb-2"
+            <v-text-field color="teal" class="custom-height mb-4"
             :disabled="disableAll || !isUniqueNumberEditable" 
-            v-model="uniqueNumber"                    
+            v-model="uniqueNumber"
+            counter="5"
+            maxlength="5"      
+                        
             label="Enter PO"
             :append-icon="isValidPO"        
             outline>
          </v-text-field> 
          <transition name="fade">
-            <v-text-field color="teal"  class="custom-height mb-2 mt-3"
+            <v-text-field color="teal"  class="custom-height mb-4 mt-5"
             :disabled="disableAll || !isDescriptionEditable"  
             v-model="description"
+            counter="50"
+            maxlength="50"
             v-if="uniqueNumber"            
             label="Enter description"
             :append-icon="isValidDescription"
@@ -108,7 +113,7 @@ export default {
   },  
   computed: {
     baseTodos() {
-      return this.$store.getters.baseTodos.sort((a,b) => a-b);
+      return this.$store.getters.userTasks.sort((a,b) => a-b);
     },
     isBlackOrWhite() {
       return this.doneTodos === this.todos.length ? "white" : ""

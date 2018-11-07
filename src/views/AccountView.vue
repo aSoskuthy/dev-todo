@@ -1,13 +1,13 @@
 <template>
   <div class="account">   
     <login v-if="!currentUser" />
-    <tasks v-else />  
+    <tasks-list v-else />  
   </div>
 </template>
 
 <script>
 import Login from '@/components/Login'
-import Tasks from '@/components/Tasks'
+import TasksList from '@/components/TasksList'
 
 export default {
 computed:{
@@ -17,7 +17,7 @@ computed:{
 },
 components: {  
   Login,
-  Tasks
+  TasksList
 },
 
 }

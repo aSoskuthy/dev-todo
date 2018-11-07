@@ -26,6 +26,7 @@
       <td class="text-xs-left">{{ props.item.description }}</td>      
       <td class="text-xs-left">
      <v-icon
+      class="hidden-sm-and-down"
       small 
       v-for="todo in props.item.todos"
       :color="getIconColorGrade(todo)" 

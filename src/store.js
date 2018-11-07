@@ -25,27 +25,11 @@ export default new Vuex.Store({
   },
   getters: {
     workItems: (state) => state.workItems,
-    baseTodos: (state) => state.userTasks,
+    userTasks: (state) => state.userTasks,
     currentUser: (state) => state.currentUser,   
     getUserId: (state) => state.currentUser ? state.currentUser.user.uid : null
   },
-  mutations: {
-    setWorkItem: (state, workItem) => {
-      let itemIndex = state.workItems.findIndex((x) => x.uniqueNumber === workItem.uniqueNumber)
-      if (itemIndex === -1) {
-        state.workItems.push(workItem)
-      } else {
-        state.workItems[itemIndex] = workItem
-      }
-    },
-    DELETE_WORK_ITEMS: (state) => state.workItems = [],
-    setTodos: (state, todos) => {      
-      state.baseTodos = todos
-    },    
-    SET_CURRENT_USER: (state, user) => state.currentUser = user,
-    DELETE_CURRENT_USER: (state) => state.currentUser = null,
-    CREATE_TASK: (state, task) => state.userTasks.push(task), 
-    DELETE_TASKS: (state) => state.userTasks = [],
+  mutations: {    
     SET_WORK_ITEM: (state, workItem) => state.workItem = { 
       ...workItem  
     },
@@ -58,13 +42,31 @@ export default new Vuex.Store({
     },
     ADD_WORK_ITEM: (state, workItem) => {
       state.workItems.push(workItem)
-    }
+    },
+    DELETE_WORK_ITEMS: (state) => state.workItems = [],       
+    SET_CURRENT_USER: (state, user) => state.currentUser = user,
+    DELETE_CURRENT_USER: (state) => state.currentUser = null,
+    CREATE_TASK: (state, task) => state.userTasks.push(task), 
+    DELETE_TASKS: (state) => state.userTasks = [],
+    
   },
   actions: {
     async signIn({commit}, credentials) {
       const user = await firebase.auth().signInWithEmailAndPassword(credentials.email, 
         credentials.password)
       commit('SET_CURRENT_USER', user)      
+    },
+    async signOut({commit}){     
+      try{
+        await firebase.auth().signOut()
+        commit('DELETE_WORK_ITEM')
+        commit('DELETE_WORK_ITEMS')
+        commit('DELETE_TASKS')
+        commit('DELETE_CURRENT_USER')
+      }catch(error){
+        console.log('Error during logout', error)
+      } 
+      
     },
     async fetchTasks({commit, state}) {      
       commit('DELETE_TASKS')      
@@ -78,8 +80,7 @@ export default new Vuex.Store({
           })  
         })   
     },
-    async updateTasksOrder({commit}, tasks){
-    console.log('store: updateTaskOrder')
+    async updateTaskOrder({commit}, tasks){    
      const batch = db.batch()
      tasks.forEach(task => {
        let ref = db.collection('baseTodos').doc(task.id)
@@ -87,16 +88,14 @@ export default new Vuex.Store({
      })     
      try{
        await batch.commit()      
-       commit('DELETE_TASKS')
-       console.log('store: DELETE_TASKS from updateTasksOrder')
-       tasks.forEach((task) =>{
-        console.log('store: commiting new task from updateTasksOrder', task)
+       commit('DELETE_TASKS')       
+       tasks.forEach((task) =>{       
          commit('CREATE_TASK', {
            ...task
          })
        })
      }catch(error){
-       console.log('Error updating tasks', error)
+       console.log('Error updating tasks order', error)
      }     
     },    
     async createTask({commit, state}, task) { 
@@ -148,6 +147,6 @@ export default new Vuex.Store({
           ...item.data(),
           id: item.id
         }))
-      }
+    }
   }
 })
