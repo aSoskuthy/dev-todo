@@ -2,13 +2,8 @@
 <v-card>   
         <v-toolbar color="teal" dark>        
           <v-toolbar-title>Change order or description</v-toolbar-title>
-        </v-toolbar>
-
-        <v-progress-circular class="ma-3" small v-if="!fetchComplete"
-      indeterminate
-      color="teal"
-    ></v-progress-circular>
-        <v-list v-else>
+        </v-toolbar>       
+        <v-list>
         <draggable :options="{'disabled': shouldPauseDraggable}" v-model="todos" @start="drag=true" @end="drag=false">
           <v-list-tile @mouseover="startDraggable" style="cursor: pointer" 
             v-for="item in todos"
@@ -59,8 +54,7 @@ import { mapActions, mapGetters } from 'vuex';
 export default {
 data(){
   return {    
-    shouldPauseDraggable: true,
-    fetchComplete: true,
+    shouldPauseDraggable: true,   
     task: {
       text: '',
       checked: false,
@@ -119,7 +113,9 @@ methods:{
     updateTasks: 'updateTasksOrder'    
   })
 },
-
+async created(){
+  await this.fetchTasks()
+}
 }
 </script>
 

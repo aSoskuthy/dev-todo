@@ -16,7 +16,7 @@
         class="elevation-1" 
         :loading="loading"
         :headers="headers"
-        :items="items"   
+        :items="workItems"   
         :search="search"   
   >
     <template slot="items" slot-scope="props">
@@ -28,7 +28,7 @@
      <v-icon
       small 
       v-for="todo in props.item.todos"
-      :color="setColor(todo)" 
+      :color="getIconColorGrade(todo)" 
       :key="todo.date">grade</v-icon>       
       {{ getPercentage(props.item.todos)  }} %  
       </td>
@@ -47,6 +47,7 @@
 
 <script>
 import db from '@/firebase'
+import { mapActions, mapMutations } from 'vuex'
 
 export default {
 data(){
@@ -66,7 +67,7 @@ data(){
     }
 },
 computed: {
-    items() {
+    workItems() {
         return this.$store.getters.workItems
     },
     currentUser(){
@@ -75,12 +76,13 @@ computed: {
 },
 methods: {
     getPercentage(tasks){
-        return this.getTasksDone(tasks) / tasks.length  * 100 
+        return Math.round(this.getTasksDone(tasks) / tasks.length  * 100) 
     },
-    setColor(todo){
+    getIconColorGrade(todo){
         return todo.checked ? this.successColor : this.defaultColor
     },
     getItem(item){
+        this.commitWorkItem(item)
         this.$router.push({name: 'editWorkItem', params: { item: item }})
     },
     getTasksDone(todos){
@@ -88,15 +90,18 @@ methods: {
              return todos.filter((todo) => todo.checked).length
         }
         return 0
-    },    
-    async fetchWorkItems(){
-        this.loading = true        
-        await this.$store.dispatch('fetchWorkItems', this.currentUser.user.uid)
-        this.loading = false  
-    }
+    },   
+    ...mapActions({
+        fetchWorkItems: 'fetchWorkItems'
+    }),
+    ...mapMutations({
+        commitWorkItem: 'SET_WORK_ITEM'
+    })     
 },
-created() {
-     this.fetchWorkItems()    
+async created() {
+     this.loading = true
+     await this.fetchWorkItems(this.currentUser.user.uid)    
+     this.loading = false
 }
 }
 </script>

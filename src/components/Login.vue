@@ -7,21 +7,24 @@
         <v-container>
             <v-flex>                 
                 <v-text-field
-                    v-model="email"
+                    v-model="credentials.email"
                     color="teal"
                     label="Outline"
                     placeholder="Email"
                     outline
             ></v-text-field>
            <v-text-field
-                v-model="password"
+                v-model="credentials.password"
                 color="teal"
                 label="Outline"
                 placeholder="Password"
                 outline
                 type="password"
           ></v-text-field>
-          <v-btn @click="login" large color="teal" dark>login</v-btn>
+          <v-btn @click="login" 
+          large color="teal" 
+          dark
+          >login</v-btn>
             </v-flex>
         </v-container>
     </v-form>
@@ -29,26 +32,29 @@
 </template>
 
 <script>
-import firebase from 'firebase'
+import { mapGetters, mapActions } from 'vuex'
 
 export default {
 data(){
     return {
-        email: '',
-        password: ''
+        credentials:{
+            email: '',
+            password: ''
+        }        
     }
 },
 computed:{
-    currentUser() {
-        return this.$store.getters.currentUser
-    }
+    ...mapGetters({
+        currentUser: 'currentUser'
+    }),    
 },
 methods: {
-    async login(){               
-        const user = await firebase.auth().signInWithEmailAndPassword(this.email, this.password)
-        this.$store.commit('setCurrentUser', user)
-        await this.$store.dispatch('fetchTasks')        
-        this.$router.push('/history')       
+    ...mapActions({
+        signIn: 'signIn'
+    }),
+    async login() { 
+        await this.signIn(this.credentials)      
+        this.$router.push('/history')                    
     }
 }
 

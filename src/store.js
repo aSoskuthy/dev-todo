@@ -1,18 +1,31 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 import db from '@/firebase'
+import firebase from 'firebase'
 
 Vue.use(Vuex)
 
 export default new Vuex.Store({
   state: {
     currentUser: null,      
+    workItem: {
+      userId: null,
+      uniqueNumber: null,
+      description: null,
+      notesDialog: false,
+      notesMessage: null,
+      todos: [],
+      disableAll: false,
+      date: null,
+      isUniqueNumberEditable: true,
+      isDescriptionEditable: true,      
+    },
     workItems: [],
-    baseTodos: []    
+    userTasks: []    
   },
   getters: {
     workItems: (state) => state.workItems,
-    baseTodos: (state) => state.baseTodos,
+    baseTodos: (state) => state.userTasks,
     currentUser: (state) => state.currentUser,   
     getUserId: (state) => state.currentUser ? state.currentUser.user.uid : null
   },
@@ -25,38 +38,45 @@ export default new Vuex.Store({
         state.workItems[itemIndex] = workItem
       }
     },
-    clearWorkItems: (state) => state.workItems = [],
+    DELETE_WORK_ITEMS: (state) => state.workItems = [],
     setTodos: (state, todos) => {      
       state.baseTodos = todos
     },    
-    setCurrentUser: (state, user) => state.currentUser = user,
-    clearCurrentUser: (state) => {
-      state.currentUser = null
+    SET_CURRENT_USER: (state, user) => state.currentUser = user,
+    DELETE_CURRENT_USER: (state) => state.currentUser = null,
+    CREATE_TASK: (state, task) => state.userTasks.push(task), 
+    DELETE_TASKS: (state) => state.userTasks = [],
+    SET_WORK_ITEM: (state, workItem) => state.workItem = { 
+      ...workItem  
     },
-    CREATE_TASK: (state, task) => {
-      state.baseTodos.push(task)
-    }, 
-    DELETE_TASKS: (state) =>{
-      state.baseTodos = [] 
-    } 
-   
+    DELETE_WORK_ITEM: (state) => state.workItem = null,
+    UPDATE_WORK_ITEM: (state, workItem) => {
+      let itemIndex = state.workItems.findIndex(
+        (x) => x.uniqueNumber === workItem.uniqueNumber
+      )
+      state.workItems[itemIndex] = { ...workItem }
+    },
+    ADD_WORK_ITEM: (state, workItem) => {
+      state.workItems.push(workItem)
+    }
   },
   actions: {
-    async fetchTasks({commit, state}) { 
-      console.log('store: fetch/task')     
-      commit('DELETE_TASKS')
-      console.log('store: DELETE_TASKS from fetchTasks', state.baseTodos)
+    async signIn({commit}, credentials) {
+      const user = await firebase.auth().signInWithEmailAndPassword(credentials.email, 
+        credentials.password)
+      commit('SET_CURRENT_USER', user)      
+    },
+    async fetchTasks({commit, state}) {      
+      commit('DELETE_TASKS')      
       let tasksRef = await db.collection('baseTodos')
         .where('userId', '==', state.currentUser.user.uid)
         .get()      
-      tasksRef.forEach((t)=> {     
-          console.log('store: commiting new task from fetch', t.data())
+      tasksRef.forEach((t)=> {           
           commit('CREATE_TASK', {
             ...t.data(),
             id: t.id
           })  
-        })       
-      
+        })   
     },
     async updateTasksOrder({commit}, tasks){
     console.log('store: updateTaskOrder')
@@ -93,41 +113,26 @@ export default new Vuex.Store({
         console.log('Failed to create task', error)
       }    
     },
-    async updateTaskText({commit}, task){
+    async updateTaskText({}, task){
       try{
         await db.collection('baseTodos').doc(task.id).update({text: task.text})        
       }catch(error){
         console.log('Failed to update task', error)
       }
       
-    },
-    async fetchBaseTodos({commit}){      
-      let todos = []
-      let baseTodosQuery = await db.collection('baseTodos').get()
-      baseTodosQuery.forEach(
-        (s)=> {          
-          todos.push(
-            { ...s.data(),
-               id: s.id}
-          )       
-      })    
-    
-      commit('setTodos', todos)
-    },
+    },    
     async updateWorkItem({commit}, workItem){
       await db.collection('workItems').doc(workItem.id).update(workItem)
-      commit('setWorkItem', {
-        ...workItem
-      })
+      commit('UPDATE_WORK_ITEM', workItem)
     },
     async addWorkItem({commit}, workItem){
       let itemRef = await db.collection('workItems').add(workItem)
-        commit('setWorkItem', {
+        commit('ADD_WORK_ITEM', {
           ...workItem,
           id: itemRef.id
         })
     },
-    async saveWorkItem({ commit, dispatch, state }, workItem) {
+    async saveWorkItem({ dispatch, state }, workItem) {
       let existingWorkItem = state.workItems.find(x => x.uniqueNumber === workItem.uniqueNumber)
       if (existingWorkItem) {
         await dispatch('updateWorkItem', {...workItem, id: existingWorkItem.id})        
@@ -135,16 +140,14 @@ export default new Vuex.Store({
         await dispatch('addWorkItem', workItem)
       }
     },
-    async fetchWorkItems({ commit }, userId) {      
+    async fetchWorkItems({ commit }, userId) {     
+      commit('DELETE_WORK_ITEMS') 
       let workItems = await db.collection('workItems').where('userId', '==', userId).get()
       workItems.forEach(item => 
-        commit('setWorkItem', {
+        commit('ADD_WORK_ITEM', {
           ...item.data(),
           id: item.id
         }))
-      
-      return new Promise((resolve) => resolve())
-
-    }
+      }
   }
 })

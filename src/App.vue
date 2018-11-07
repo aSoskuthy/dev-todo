@@ -3,13 +3,17 @@
   <div id="app"> 
   <v-toolbar app>  
     <v-icon color="teal" large> done_all</v-icon>
-    <v-toolbar-title style="color: teal; font-size: 24px"></v-toolbar-title>  
+    <v-toolbar-title></v-toolbar-title>  
    <v-spacer></v-spacer>
    <v-toolbar-items>
-      <v-btn v-if="currentUser" @click="toChecklist" color="teal" flat><v-icon >check_circle</v-icon></v-btn>    
-      <v-btn v-if="currentUser" @click="toHistory" color="teal" flat><v-icon >history</v-icon></v-btn>    
-      <v-btn @click="toAccount" color="teal" flat><v-icon >account_circle</v-icon></v-btn>     
-      <v-btn v-if="currentUser" @click="signOut" color="teal" flat><v-icon >exit_to_app</v-icon></v-btn>   
+      <v-btn v-for="btn in navigationButtons" 
+      v-if="currentUser"
+      :key="btn.order"
+      @click="btn.navigate(btn.route)"
+      color="teal"
+      flat
+      ><v-icon>{{ btn.icon }}</v-icon>
+      </v-btn>
     </v-toolbar-items>
   </v-toolbar>
   <v-content>
@@ -23,30 +27,44 @@
 
 <script>
 import firebase from 'firebase'
+import { mapMutations, mapGetters } from 'vuex'
 
 export default {
   name: 'app',
-  methods: {
-    toChecklist() {
-      this.$router.replace({name: 'editWorkItem'})
-    },
-    toAccount() {
-      this.$router.replace('/account')
-    },
-    toHistory(){
-      this.$router.replace('/history')
-    },
-    async signOut(){
-      await firebase.auth().signOut()
-      this.$store.commit('clearCurrentUser')    
-      this.$router.replace('/history')
-      
+  data() {
+    return {
+      navigationButtons: [
+      { route: '/', icon: 'check_circle', order: 0, navigate: this.navigate },
+      { route: '/history', icon: 'history', order: 1, navigate: this.navigate },
+      { route: '/account', icon: 'account_circle', order: 2, navigate: this.navigate },
+      { route: '/account', icon: 'exit_to_app', order: 3, navigate: this.signOut },
+      ]
     }
+  },
+  methods: {
+    navigate(route) {   
+      this.$router.replace(route)
+    }, 
+    async signOut(route) {      
+      this.clearWorkItem()
+      this.clearWorkItems()
+      this.clearTasks()
+      this.clearUser()
+
+      await firebase.auth().signOut()       
+      this.navigate(route)
+    },
+    ...mapMutations({
+      clearWorkItem: 'DELETE_WORK_ITEM',
+      clearWorkItems: 'DELETE_WORK_ITEMS',
+      clearUser: 'DELETE_CURRENT_USER',
+      clearTasks: 'DELETE_TASKS'
+    }),
   },  
   computed: {   
-    currentUser(){
-      return this.$store.getters.currentUser
-    }
+    ...mapGetters({
+      currentUser: 'currentUser'
+    })   
   }  
 }
 </script>
