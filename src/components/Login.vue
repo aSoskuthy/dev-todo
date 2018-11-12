@@ -25,6 +25,10 @@
           large color="teal" 
           dark
           >login</v-btn>
+          <v-btn @click="demoLogin" 
+          large color="teal" 
+          dark
+          >demo user</v-btn>
             </v-flex>
         </v-container>
     </v-form>
@@ -50,8 +54,13 @@ computed:{
 },
 methods: {
     ...mapActions({
-        signIn: 'signIn'
+        signIn: 'signIn',
+        demoSignIn: 'demoSignIn'
     }),
+    async demoLogin(){
+        await this.demoSignIn()
+        this.$router.push('/history')
+    },
     async login() { 
         await this.signIn(this.credentials)      
         this.$router.push('/history')                    

@@ -2,6 +2,7 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import db from '@/firebase'
 import firebase from 'firebase'
+import { rejects } from 'assert';
 
 Vue.use(Vuex)
 
@@ -24,7 +25,14 @@ export default new Vuex.Store({
     userTasks: []    
   },
   getters: {
-    workItems: (state) => state.workItems,
+    workItems: (state) => {
+       state.workItems.forEach(item =>{
+         Vue.set(item, 'iconFontSize', 24)
+       }) 
+
+       return state.workItems
+    },
+    workItem: (state) => state.workItem,
     userTasks: (state) => state.userTasks,
     currentUser: (state) => state.currentUser,   
     getUserId: (state) => state.currentUser ? state.currentUser.user.uid : null
@@ -33,7 +41,7 @@ export default new Vuex.Store({
     SET_WORK_ITEM: (state, workItem) => state.workItem = { 
       ...workItem  
     },
-    DELETE_WORK_ITEM: (state) => state.workItem = null,
+    CLEAR_WORK_ITEM: (state) => state.workItem = null,
     UPDATE_WORK_ITEM: (state, workItem) => {
       let itemIndex = state.workItems.findIndex(
         (x) => x.uniqueNumber === workItem.uniqueNumber
@@ -43,33 +51,50 @@ export default new Vuex.Store({
     ADD_WORK_ITEM: (state, workItem) => {
       state.workItems.push(workItem)
     },
-    DELETE_WORK_ITEMS: (state) => state.workItems = [],       
+    CLEAR_WORK_ITEMS: (state) => state.workItems = [],       
     SET_CURRENT_USER: (state, user) => state.currentUser = user,
-    DELETE_CURRENT_USER: (state) => state.currentUser = null,
+    CLEAR_CURRENT_USER: (state) => state.currentUser = null,
     CREATE_TASK: (state, task) => state.userTasks.push(task), 
-    DELETE_TASKS: (state) => state.userTasks = [],
+    CLEAR_TASKS: (state) => state.userTasks = [],
+    DELETE_WORK_ITEM: (state, workItem) => {
+      state.workItems.splice(state.workItems.findIndex(item =>
+        item.uniqueNumber === workItem.uniqueNumber),
+        1)
+    }
     
   },
   actions: {
-    async signIn({commit}, credentials) {
-      const user = await firebase.auth().signInWithEmailAndPassword(credentials.email, 
-        credentials.password)
-      commit('SET_CURRENT_USER', user)      
+    async deleteAllTasks({commit}){
+     // to be done...
+    },
+    async demoSignIn({commit}){
+      const user = await firebase.auth().signInWithEmailAndPassword('demo@mutualvision.co.uk','mvdemo').catch(alert)
+      commit('SET_CURRENT_USER', user)  
+    },
+    async deleteWorkItem({commit}, workItem){
+      await db.collection('workItems').doc(workItem.id).delete()
+      commit('DELETE_WORK_ITEM', workItem)
+    },
+    async signIn({commit}, credentials) {     
+        const user = await firebase.auth().signInWithEmailAndPassword(credentials.email, 
+          credentials.password)
+          .catch(alert)
+        commit('SET_CURRENT_USER', user)                  
     },
     async signOut({commit}){     
       try{
         await firebase.auth().signOut()
-        commit('DELETE_WORK_ITEM')
-        commit('DELETE_WORK_ITEMS')
-        commit('DELETE_TASKS')
-        commit('DELETE_CURRENT_USER')
+        commit('CLEAR_WORK_ITEM')
+        commit('CLEAR_WORK_ITEMS')
+        commit('CLEAR_TASKS')
+        commit('CLEAR_CURRENT_USER')
       }catch(error){
         console.log('Error during logout', error)
       } 
       
     },
     async fetchTasks({commit, state}) {      
-      commit('DELETE_TASKS')      
+      commit('CLEAR_TASKS')      
       let tasksRef = await db.collection('baseTodos')
         .where('userId', '==', state.currentUser.user.uid)
         .get()      
@@ -88,7 +113,7 @@ export default new Vuex.Store({
      })     
      try{
        await batch.commit()      
-       commit('DELETE_TASKS')       
+       commit('CLEAR_TASKS')       
        tasks.forEach((task) =>{       
          commit('CREATE_TASK', {
            ...task
@@ -99,7 +124,7 @@ export default new Vuex.Store({
      }     
     },    
     async createTask({commit, state}, task) { 
-      const orderOfTask = state.baseTodos.length 
+      const orderOfTask = state.userTasks.length 
       const newTask = { 
         ...task, 
         order: orderOfTask 
@@ -140,7 +165,7 @@ export default new Vuex.Store({
       }
     },
     async fetchWorkItems({ commit }, userId) {     
-      commit('DELETE_WORK_ITEMS') 
+      commit('CLEAR_WORK_ITEMS') 
       let workItems = await db.collection('workItems').where('userId', '==', userId).get()
       workItems.forEach(item => 
         commit('ADD_WORK_ITEM', {

@@ -1,8 +1,9 @@
 <template>
 <v-container>
     <v-layout>
-      <v-flex  md6 offset-md3>    
-        <v-card class="pa-2">             
+      <v-flex  md6 offset-md3>   
+        <v-alert outline  type="error" :value="true" v-if="userTasks.length === 0">You have to add tasks first. Click <router-link :to="'/account'">here</router-link> to add tasks</v-alert> 
+        <v-card v-else class="pa-2">             
             <v-text-field color="teal" class="custom-height mb-4"
             :disabled="disableAll || !isUniqueNumberEditable" 
             v-model="uniqueNumber"
@@ -93,12 +94,12 @@
 
 <script>
 import db from '@/firebase'
-import {mapActions} from 'vuex'
+import {mapActions, mapGetters} from 'vuex'
 
-export default {
-  props: ["item"],
+export default {  
   data() {
     return {
+      id: null,
       userId: null,
       uniqueNumber: null,
       description: null,
@@ -112,9 +113,11 @@ export default {
     };
   },  
   computed: {
-    baseTodos() {
-      return this.$store.getters.userTasks.sort((a,b) => a-b);
-    },
+    ...mapGetters({
+      workItem: 'workItem',
+      userTasks: 'userTasks',
+      currentUser: 'currentUser'
+    }),   
     isBlackOrWhite() {
       return this.doneTodos === this.todos.length ? "white" : ""
     },
@@ -129,10 +132,7 @@ export default {
     },
     isValidDescription() {
       return this.description ? "done" : ""
-    },
-    currentUser(){
-        return this.$store.getters.currentUser
-    }
+    }    
   },   
   methods: {
     ...mapActions({
@@ -143,7 +143,7 @@ export default {
     resetWorkItem() {
       this.uniqueNumber = null;
       this.description = null;
-      this.todos = this.baseTodos.map(x => ({ ...x }));
+      this.todos = this.userTasks.map(x => ({ ...x }));
     },
     async save() { 
       this.disableAll = true;       
@@ -174,11 +174,11 @@ export default {
       this.isDescriptionEditable = false
   }
   },  
-  async created() {
-    if (this.item) {
-      this.loadExistingWorkItem(this.item)      
+  async created() {    
+    if (this.workItem.hasOwnProperty('id')) {
+      this.loadExistingWorkItem(this.workItem)      
     } else {      
-      const todos = this.baseTodos.map(x => ({ ...x }));
+      const todos = this.userTasks.map(x => ({ ...x }));
       this.todos = todos;
       this.isUniqueNumberEditable = true
       this.isDescriptionEditable = true

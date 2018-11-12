@@ -25,7 +25,7 @@
 </template>
 
 <script>
-import { mapGetters, mapActions } from 'vuex'
+import { mapGetters, mapActions, mapMutations } from 'vuex'
 
 export default {
   name: 'app',
@@ -47,12 +47,32 @@ export default {
   methods: {
     ...mapActions({
       signOut: 'signOut'
+      
+    }),
+    ...mapMutations({
+      clearWorkItem: 'SET_WORK_ITEM'
     }),
     async logOut(route) {  
       await this.signOut()      
       this.navigate(route)
     },   
     navigate(route) {   
+      if(route === '/') {
+        const emptyItem = { 
+          userId: null,
+          uniqueNumber: null,
+          description: null,
+          notesDialog: false,
+                  notesMessage: null,
+                  todos: [],
+                  disableAll: false,
+                  date: null,
+                  isUniqueNumberEditable: true,
+                  isDescriptionEditable: true
+        }
+
+      this.clearWorkItem(emptyItem)
+      }
       this.$router.replace(route)
     }
   }  

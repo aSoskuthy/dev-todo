@@ -20,11 +20,10 @@
         :search="search"   
   >
     <template slot="items" slot-scope="props">
-    <tr style="cursor: pointer" 
-        @click="getItem(props.item)">
-      <td class="text-xs-left">{{ props.item.uniqueNumber }}</td>
-      <td class="text-xs-left">{{ props.item.description }}</td>      
-      <td class="text-xs-left">
+    <tr style="cursor: pointer" >
+      <td @click="getItem(props.item)" class="text-xs-left">{{ props.item.uniqueNumber }}</td>
+      <td @click="getItem(props.item)" class="text-xs-left">{{ props.item.description }}</td>      
+      <td @click="getItem(props.item)" class="text-xs-left">
      <v-icon
       class="hidden-sm-and-down"
       small 
@@ -33,12 +32,22 @@
       :key="todo.date">grade</v-icon>       
       {{ getPercentage(props.item.todos)  }} %  
       </td>
-      <td class="text-xs-left">{{props.item.date}}</td>
-      <td class="text-xs-left">
-          <v-icon v-if="!props.item.notesMessage" 
-                :color="defaultColor">note</v-icon>
-          <v-icon v-else 
-                :color="successColor">note</v-icon>
+      <td @click="getItem(props.item)" class="text-xs-left">{{props.item.date}}</td>
+      <td class="text-xs-left">  
+    <v-tooltip v-if="props.item.notesMessage" left>
+        {{ props.item.notesMessage }}
+      <v-icon 
+      slot="activator"                      
+      :color="successColor">note</v-icon>        
+        </v-tooltip>
+        <v-icon :color="defaultColor" v-else>note</v-icon>
+          <v-icon  
+           @mouseover="props.item.iconFontSize += fontIncrementSize"
+           @mouseleave="props.item.iconFontSize -= fontIncrementSize"
+           
+           @click="deleteWorkItem(props.item)"
+           :style="{ fontSize: props.item.iconFontSize + 'px'}"
+           :color="successColor">delete</v-icon>
       </td>
       </tr>
     </template>
@@ -48,11 +57,14 @@
 
 <script>
 import db from '@/firebase'
-import { mapActions, mapMutations } from 'vuex'
+import Vue from 'vue'
+import { mapActions, mapMutations, mapGetters } from 'vuex'
 
 export default {
 data(){
     return {
+         defaultFontSize: 24,
+         fontIncrementSize: 8,
          successColor:'teal',
          defaultColor: 'grey',
          loading: true,
@@ -62,20 +74,19 @@ data(){
             { text: 'Description', value: 'description', sortable: true },
             { text: 'Completion', value: false, sortable: false },
             { text: 'Date', value: 'date', sortable: true },
-            { text: 'Notes', sortable: false }        
+            { text: 'Notes', sortable: false }                   
          
         ],
     }
 },
 computed: {
-    workItems() {
-        return this.$store.getters.workItems
-    },
-    currentUser(){
-        return this.$store.getters.currentUser
-    }
+    ...mapGetters({
+        workItems: 'workItems',
+        currentUser: 'currentUser'
+    }),   
+
 },
-methods: {
+methods: {   
     getPercentage(tasks){
         return Math.round(this.getTasksDone(tasks) / tasks.length  * 100) 
     },
@@ -84,7 +95,7 @@ methods: {
     },
     getItem(item){
         this.commitWorkItem(item)
-        this.$router.push({name: 'editWorkItem', params: { item: item }})
+        this.$router.push('/')
     },
     getTasksDone(todos){
         if(todos.length > 0) {
@@ -93,7 +104,8 @@ methods: {
         return 0
     },   
     ...mapActions({
-        fetchWorkItems: 'fetchWorkItems'
+        fetchWorkItems: 'fetchWorkItems',
+        deleteWorkItem: 'deleteWorkItem'
     }),
     ...mapMutations({
         commitWorkItem: 'SET_WORK_ITEM'
