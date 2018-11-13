@@ -2,7 +2,7 @@
 <v-card>   
         <v-toolbar color="teal" dark>        
           <v-toolbar-title>Drag to change order, or click <v-icon  dark>edit</v-icon> description</v-toolbar-title>
-        <v-spacer /><v-tooltip @click="deleteAll" left>Delete All <v-icon slot="activator">layers_clear</v-icon></v-tooltip>
+        <v-spacer /><v-tooltip @click="deleteAll" left>Delete All (not implemented yet)<v-icon slot="activator">layers_clear</v-icon></v-tooltip>
         </v-toolbar>       
         <v-list>
         <draggable :options="{'disabled': shouldPauseDraggable}" v-model="todos" @start="drag=true" @end="drag=false">

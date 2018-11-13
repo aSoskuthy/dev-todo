@@ -9,7 +9,9 @@
   },
   "dependencies": {
     "axios": "^0.18.0",
+    "babel-polyfill": "^6.26.0",
     "firebase": "^5.5.5",
+    "iterators-polyfill": "^1.0.2",
     "vue": "^2.5.17",
     "vue-router": "^3.0.1",
     "vuedraggable": "^2.16.0",

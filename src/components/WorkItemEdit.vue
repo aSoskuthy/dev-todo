@@ -86,10 +86,23 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+     <v-dialog v-model="existingItemDialog" max-width="500px">
+        <v-card>
+          <v-card-title>
+            <span>PO <b>{{ uniqueNumber }}</b> already exist, continue with overwrite?</span>
+            <v-spacer></v-spacer>          
+          </v-card-title>
+          <v-card-actions>
+            <v-btn color="teal" dark  @click="[commitSave(), existingItemDialog = false]">Continue</v-btn>
+             <v-btn color="teal" flat @click="existingItemDialog=false">Cancel</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
         </v-card>
         </v-flex> 
     </v-layout>    
 </v-container>
+
 </template>
 
 <script>
@@ -109,14 +122,16 @@ export default {
       disableAll: false,
       date: null,
       isUniqueNumberEditable: true,
-      isDescriptionEditable: true
+      isDescriptionEditable: true,
+      existingItemDialog: false
     };
   },  
   computed: {
     ...mapGetters({
       workItem: 'workItem',
       userTasks: 'userTasks',
-      currentUser: 'currentUser'
+      currentUser: 'currentUser',   
+      workItems: 'workItems'   
     }),   
     isBlackOrWhite() {
       return this.doneTodos === this.todos.length ? "white" : ""
@@ -132,7 +147,13 @@ export default {
     },
     isValidDescription() {
       return this.description ? "done" : ""
-    }    
+    },
+    progress() {
+      if(this.todos.length > 0) {
+             const finishedTasks = this.todos.filter((todo) => todo.checked).length
+             return Math.round(finishedTasks / this.todos.length  * 100) 
+        }       
+      }    
   },   
   methods: {
     ...mapActions({
@@ -145,15 +166,16 @@ export default {
       this.description = null;
       this.todos = this.userTasks.map(x => ({ ...x }));
     },
-    async save() { 
+    async commitSave(){
       this.disableAll = true;       
-      const workItem = {
+          const workItem = {
             userId: this.currentUser.user.uid,
             uniqueNumber: this.uniqueNumber,
             description: this.description,
             todos: this.todos,
             notes: this.notesDialog,
             notesMessage: this.notesMessage,
+            progress: this.progress,
             date: new Date()
                 .toJSON()
                 .slice(0, 10)
@@ -162,7 +184,18 @@ export default {
           
       await this.saveWorkItem(workItem)                  
       this.resetWorkItem()
-      this.disableAll = false           
+      this.disableAll = false  
+    },
+    async save() { 
+      if(!this.workItem.hasOwnProperty('id') && this.isExistingItem(this.uniqueNumber)){
+        this.existingItemDialog = true
+      }else{
+        await this.commitSave() 
+      }   
+     
+    },
+    isExistingItem(uniqueNumber){
+      return this.workItems.some((item)=> item.uniqueNumber === uniqueNumber)
     },
     loadExistingWorkItem(workItem){
       this.uniqueNumber = workItem.uniqueNumber

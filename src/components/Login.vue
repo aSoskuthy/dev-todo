@@ -9,15 +9,15 @@
                 <v-text-field
                     v-model="credentials.email"
                     color="teal"
-                    label="Outline"
-                    placeholder="Email"
+                    label="Email"
+                    
                     outline
             ></v-text-field>
            <v-text-field
                 v-model="credentials.password"
                 color="teal"
-                label="Outline"
-                placeholder="Password"
+                label="Password"
+                
                 outline
                 type="password"
           ></v-text-field>

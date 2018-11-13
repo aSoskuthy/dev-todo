@@ -24,13 +24,23 @@
       <td @click="getItem(props.item)" class="text-xs-left">{{ props.item.uniqueNumber }}</td>
       <td @click="getItem(props.item)" class="text-xs-left">{{ props.item.description }}</td>      
       <td @click="getItem(props.item)" class="text-xs-left">
-     <v-icon
+     <!-- <v-icon
       class="hidden-sm-and-down"
       small 
       v-for="todo in props.item.todos"
       :color="getIconColorGrade(todo)" 
-      :key="todo.date">grade</v-icon>       
-      {{ getPercentage(props.item.todos)  }} %  
+      :key="todo.date">grade</v-icon>        -->
+       <v-progress-linear color="teal"
+       width="32"
+        v-model="props.item.progress"></v-progress-linear>
+        <!-- <v-progress-circular
+      :value="getPercentage(props.item.todos)"
+      color="teal"
+      :width="3"
+      size="36"
+      style="font-size: 10px"
+    >{{getPercentage(props.item.todos)}}</v-progress-circular> -->
+    
       </td>
       <td @click="getItem(props.item)" class="text-xs-left">{{props.item.date}}</td>
       <td class="text-xs-left">  
@@ -41,13 +51,11 @@
       :color="successColor">note</v-icon>        
         </v-tooltip>
         <v-icon :color="defaultColor" v-else>note</v-icon>
-          <v-icon  
-           @mouseover="props.item.iconFontSize += fontIncrementSize"
-           @mouseleave="props.item.iconFontSize -= fontIncrementSize"
-           
-           @click="deleteWorkItem(props.item)"
-           :style="{ fontSize: props.item.iconFontSize + 'px'}"
-           :color="successColor">delete</v-icon>
+          <v-icon 
+           class="delete-icon"
+           @click="deleteWorkItem(props.item)" 
+           :mouseover="color=successColor"         
+           :color="defaultColor">delete</v-icon>
       </td>
       </tr>
     </template>
@@ -120,5 +128,7 @@ async created() {
 </script>
 
 <style>
-
+.delete-icon:hover{
+    color: teal !important;
+}
 </style>

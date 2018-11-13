@@ -2,7 +2,7 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import db from '@/firebase'
 import firebase from 'firebase'
-import { rejects } from 'assert';
+
 
 Vue.use(Vuex)
 
@@ -19,21 +19,16 @@ export default new Vuex.Store({
       disableAll: false,
       date: null,
       isUniqueNumberEditable: true,
-      isDescriptionEditable: true,      
+      isDescriptionEditable: true,     
+      progress: null 
     },
     workItems: [],
     userTasks: []    
   },
   getters: {
-    workItems: (state) => {
-       state.workItems.forEach(item =>{
-         Vue.set(item, 'iconFontSize', 24)
-       }) 
-
-       return state.workItems
-    },
+    workItems: (state) => state.workItems,    
     workItem: (state) => state.workItem,
-    userTasks: (state) => state.userTasks,
+    userTasks: (state) => state.userTasks.sort((a,b) => a.order - b.order),
     currentUser: (state) => state.currentUser,   
     getUserId: (state) => state.currentUser ? state.currentUser.user.uid : null
   },
