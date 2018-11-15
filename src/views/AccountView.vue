@@ -1,13 +1,15 @@
 <template>
   <div class="account">   
-    <login v-if="!currentUser" />
-    <tasks-list v-else />  
+    <login v-if="!currentUser && $route.name !== 'signup'" />
+    <tasks-list v-if="currentUser" />  
+    <signup v-if="$route.name === 'signup'" />
   </div>
 </template>
 
 <script>
 import Login from '@/components/Login'
 import TasksList from '@/components/TasksList'
+import Signup from '@/components/Signup'
 
 export default {
 computed:{
@@ -17,9 +19,12 @@ computed:{
 },
 components: {  
   Login,
+  Signup,
   TasksList
 },
-
+created(){
+  console.log(this.$route.name)
+}
 }
 </script>
 

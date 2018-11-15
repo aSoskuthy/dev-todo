@@ -2,7 +2,11 @@
 <v-container>
     <v-layout>
       <v-flex  md6 offset-md3>   
-        <v-alert outline  type="error" :value="true" v-if="userTasks.length === 0">You have to add tasks first. Click <router-link :to="'/account'">here</router-link> to add tasks</v-alert> 
+        <v-alert outline 
+         type="error" 
+         :value="true" 
+         style="color: teal"
+         v-if="userTasks.length === 0">You have to add tasks first. Click <router-link :to="'/account'">here</router-link> to add tasks</v-alert> 
         <v-card v-else class="pa-2">             
             <v-text-field color="teal" class="custom-height mb-4"
             :disabled="disableAll || !isUniqueNumberEditable" 
@@ -107,14 +111,14 @@
 
 <script>
 import db from '@/firebase'
-import {mapActions, mapGetters} from 'vuex'
+import { mapActions, mapGetters, mapState } from 'vuex'
 
 export default {  
   data() {
     return {
       id: null,
       userId: null,
-      uniqueNumber: null,
+      uniqueNumber: 0,
       description: null,
       notesDialog: false,
       notesMessage: null,
@@ -123,9 +127,10 @@ export default {
       date: null,
       isUniqueNumberEditable: true,
       isDescriptionEditable: true,
-      existingItemDialog: false
+      existingItemDialog: false,
+      progress: 0
     };
-  },  
+  },
   computed: {
     ...mapGetters({
       workItem: 'workItem',
@@ -148,10 +153,27 @@ export default {
     isValidDescription() {
       return this.description ? "done" : ""
     },
+    progressBarColorBasedOnProgress(){
+      const progress = this.progress
+      let color
+      if(progress <= 25){
+        color = "red"
+      }else if(progress < 50){
+        color = "orange"
+      }else if(progress <= 75) {
+        color = "blue"
+      }else{
+        color = "teal"
+      }
+      return color
+    },
     progress() {
       if(this.todos.length > 0) {
-             const finishedTasks = this.todos.filter((todo) => todo.checked).length
-             return Math.round(finishedTasks / this.todos.length  * 100) 
+             const finishedTasks = this.getTasksDone(this.todos)
+             return Math.round(
+               this.getPercentage(
+                 finishedTasks, this.todos.length)
+                 ) 
         }       
       }    
   },   
@@ -161,12 +183,23 @@ export default {
       fetchWorkItems: 'fetchWorkItems',
       saveWorkItem: 'saveWorkItem'
     }),
+    getPercentage(finishedTasks, allTasks){
+       return Math.round(finishedTasks / allTasks * 100)
+    },
+    getTasksDone(tasks){
+        if(tasks.length > 0) {
+             return tasks.filter((task) => task.checked).length
+        }
+        return 0
+    },   
     resetWorkItem() {
       this.uniqueNumber = null;
       this.description = null;
       this.todos = this.userTasks.map(x => ({ ...x }));
+      this.isUniqueNumberEditable = true
+      this.isDescriptionEditable = true
     },
-    async commitSave(){
+    async commitSave() {
       this.disableAll = true;       
           const workItem = {
             userId: this.currentUser.user.uid,
@@ -176,6 +209,7 @@ export default {
             notes: this.notesDialog,
             notesMessage: this.notesMessage,
             progress: this.progress,
+            progressBarColorBasedOnProgress: this.progressBarColorBasedOnProgress,
             date: new Date()
                 .toJSON()
                 .slice(0, 10)

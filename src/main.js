@@ -8,7 +8,7 @@ import router from '@/router'
 import Vuetify from 'vuetify'
 import firebase from 'firebase'
 import "iterators-polyfill";
-
+import colors from 'vuetify/es5/util/colors'
 // Polyfill Math.cbrt
 if (!Math.cbrt) {
   Math.cbrt = function(x) {
@@ -40,8 +40,12 @@ if (!String.prototype.includes) {
 }
 // End of Polyfills
 
+
 Vue.use(Vuetify, {
-  iconfont: 'md'
+  iconfont: 'md',
+  theme: {
+    primary: colors.teal
+  }
 })
 Vue.config.productionTip = false
 

@@ -1,8 +1,8 @@
 <template>
 <v-card>
-    <v-form v-if="!currentUser" class="mb-3">
+    <v-form class="mb-3">
         <v-toolbar dark color="teal">
-            <v-toolbar-title>Login</v-toolbar-title>
+            <v-toolbar-title>Signup</v-toolbar-title>
         </v-toolbar>
         <v-container>
             <v-flex>                 
@@ -21,17 +21,13 @@
                 outline
                 type="password"
           ></v-text-field>
-          <v-btn @click="login" 
+          <v-btn @click="signup()" 
           large color="teal" 
           dark
-          >login</v-btn>
-          <v-btn @click="demoLogin" 
-          large color="teal" 
-          dark
-          >demo user</v-btn>        
+          >Signup</v-btn>                
             </v-flex>
             <v-flex>
-                  Don't have an account yet? <router-link :to="'/signup'">Create one</router-link>
+                  Already have an account? <router-link :to="'/account'">Login</router-link>
             </v-flex>
         </v-container>
     </v-form>
@@ -39,10 +35,10 @@
 </template>
 
 <script>
-import { mapGetters, mapActions, mapState } from 'vuex'
-
+import firebase from 'firebase'
+import { mapActions } from 'vuex'
 export default {
-data(){
+    data(){
     return {
         credentials:{
             email: '',
@@ -50,30 +46,17 @@ data(){
         }        
     }
 },
-computed:{
-    ...mapState({
-        currentUser: 'currentUser'
-    })
-   
-},
-methods: {
+methods:{
     ...mapActions({
-        signIn: 'signIn',
-        demoSignIn: 'demoSignIn'
+        login: 'signIn'
     }),
-    async demoLogin(){
-        await this.demoSignIn()
-        this.$router.push('/history')
-    },
-    async login() { 
-        await this.signIn(this.credentials)      
-        this.$router.push('/history')                    
+    async signup(){
+        await firebase.auth().createUserWithEmailAndPassword(
+            this.credentials.email, 
+            this.credentials.password).catch(alert)
+        await this.login(this.credentials)       
+        this.$router.push('/')
     }
 }
-
 }
 </script>
-
-<style>
-
-</style>

@@ -6,7 +6,19 @@ import firebase from 'firebase'
 
 Vue.use(Vuex)
 
+const workItemModule = {
+  state: {
+    testWorkItemState: 1
+  },
+  getters: {},
+  mutations: {},
+  actions: {}
+}
+
 export default new Vuex.Store({
+  modules:{
+    workItemModule: workItemModule
+  },
   state: {
     currentUser: null,      
     workItem: {
@@ -26,23 +38,27 @@ export default new Vuex.Store({
     userTasks: []    
   },
   getters: {
+    workItemById: state => uniqueNumber => state.workItems.find(item => item.uniqueNumber === uniqueNumber),
     workItems: (state) => state.workItems,    
     workItem: (state) => state.workItem,
     userTasks: (state) => state.userTasks.sort((a,b) => a.order - b.order),
     currentUser: (state) => state.currentUser,   
     getUserId: (state) => state.currentUser ? state.currentUser.user.uid : null
   },
-  mutations: {    
+  mutations: { 
+    UPDATE_WORK_ITEM: (state, workItem)=> {
+      state.workItem = Object.assign({}, state.workItem, workItem)
+    },   
     SET_WORK_ITEM: (state, workItem) => state.workItem = { 
-      ...workItem  
+      ...state.workItem, ...workItem  
     },
     CLEAR_WORK_ITEM: (state) => state.workItem = null,
-    UPDATE_WORK_ITEM: (state, workItem) => {
-      let itemIndex = state.workItems.findIndex(
-        (x) => x.uniqueNumber === workItem.uniqueNumber
-      )
-      state.workItems[itemIndex] = { ...workItem }
-    },
+    // UPDATE_WORK_ITEM: (state, workItem) => {
+    //   let itemIndex = state.workItems.findIndex(
+    //     (x) => x.uniqueNumber === workItem.uniqueNumber
+    //   )
+    //   state.workItems[itemIndex] = { ...workItem }
+    // },
     ADD_WORK_ITEM: (state, workItem) => {
       state.workItems.push(workItem)
     },
@@ -159,9 +175,9 @@ export default new Vuex.Store({
         await dispatch('addWorkItem', workItem)
       }
     },
-    async fetchWorkItems({ commit }, userId) {     
+    async fetchWorkItems({ commit, state }) {     
       commit('CLEAR_WORK_ITEMS') 
-      let workItems = await db.collection('workItems').where('userId', '==', userId).get()
+      let workItems = await db.collection('workItems').where('userId', '==', state.currentUser.user.uid).get()
       workItems.forEach(item => 
         commit('ADD_WORK_ITEM', {
           ...item.data(),

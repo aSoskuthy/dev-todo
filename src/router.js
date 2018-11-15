@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import WorkItemView from '@/views/WorkItemView'
+import WorkItemCreate from '@/components/work_item/Create'
 import AccountView from '@/views/AccountView'
 import WorkItemsView from '@/views/WorkItemsView'
 import store from '@/store'
@@ -15,9 +15,8 @@ let router = new Router({
     },
     {
       path: '/',
-      name: 'editWorkItem',
-      component: WorkItemView,
-      props: true,
+      name: 'create',
+      component: WorkItemCreate,      
       meta: {
         requiresAuth: true
       }
@@ -34,6 +33,11 @@ let router = new Router({
       meta: {
         requiresAuth: true
       }
+    },
+    {
+      path: '/signup',
+      name: 'signup',
+      component: AccountView
     }
   ]
 })

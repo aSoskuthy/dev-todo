@@ -17,7 +17,7 @@
   </v-toolbar>
   <v-content>
     <v-container fluid>
-      <router-view ></router-view>
+      <router-view :key="$route.fullPath"></router-view>
     </v-container>
   </v-content>
   </div>
@@ -63,12 +63,12 @@ export default {
           uniqueNumber: null,
           description: null,
           notesDialog: false,
-                  notesMessage: null,
-                  todos: [],
-                  disableAll: false,
-                  date: null,
-                  isUniqueNumberEditable: true,
-                  isDescriptionEditable: true
+          notesMessage: null,
+          todos: [],
+          disableAll: false,
+          date: null,
+          isUniqueNumberEditable: true,
+          isDescriptionEditable: true
         }
 
       this.clearWorkItem(emptyItem)

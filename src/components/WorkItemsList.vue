@@ -30,9 +30,10 @@
       v-for="todo in props.item.todos"
       :color="getIconColorGrade(todo)" 
       :key="todo.date">grade</v-icon>        -->
-       <v-progress-linear color="teal"
-       width="32"
-        v-model="props.item.progress"></v-progress-linear>
+      <v-tooltip left>{{props.item.progress}}%
+       <v-progress-linear slot="activator" :color="colorBars(props.item.progress)"
+       
+        v-model="props.item.progress"></v-progress-linear></v-tooltip>
         <!-- <v-progress-circular
       :value="getPercentage(props.item.todos)"
       color="teal"
@@ -80,7 +81,7 @@ data(){
          headers: [
             { text: 'PO Number', value:'uniqueNumber',  align: 'left', sortable: true },
             { text: 'Description', value: 'description', sortable: true },
-            { text: 'Completion', value: false, sortable: false },
+            { text: 'Completion', value: 'progress', sortable: true },
             { text: 'Date', value: 'date', sortable: true },
             { text: 'Notes', sortable: false }                   
          
@@ -95,6 +96,28 @@ computed: {
 
 },
 methods: {   
+    colorBars(progress){
+    let color
+      if(progress <= 25){
+        color = "red"
+      }else if(progress < 50){
+        color = "orange"
+      }else if(progress <= 75) {
+        color = "blue"
+      }else{
+        color = "teal"
+      }
+      return color
+    },
+    calculateProgress(userTasks) {
+      if(userTasks.length > 0) {
+             const finishedTasks = this.getTasksDone(userTasks)
+             return Math.round(
+               this.getPercentage(
+                 finishedTasks, userTasks.length)
+                 ) 
+        }       
+    },    
     getPercentage(tasks){
         return Math.round(this.getTasksDone(tasks) / tasks.length  * 100) 
     },
@@ -121,7 +144,9 @@ methods: {
 },
 async created() {
      this.loading = true
-     await this.fetchWorkItems(this.currentUser.user.uid)    
+     console.log('started fetch in created')
+     await this.fetchWorkItems()    
+      console.log('finished fetch in created')
      this.loading = false
 }
 }
