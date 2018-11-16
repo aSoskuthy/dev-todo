@@ -2,21 +2,22 @@
 <v-container>
     <v-layout>
       <v-flex  md6 offset-md3>   
-      <v-form v-model="valid">
+      <v-form ref="form" v-model="isValidForm">
         <transition name="fade">
         <v-alert 
-         v-if="existingWorkItem.uniqueNumber" 
+         v-if="existingWorkItemDescription && !disableAll" 
          class="mb-3" 
          outline 
          type="error"  
+         style="border-radius: 3px"
          :value="true">
-         Saving will overwrite the following item: 
-         PO {{ existingWorkItem.uniqueNumber }} - {{ existingWorkItem.description }}</v-alert> 
+         Saving will overwrite an existing item "{{ existingWorkItemDescription }}"<br> 
+         Load it instead? <router-link :to="'/edit/' + uniqueNumber">Click to Load</router-link> </v-alert> 
          </transition>
         <v-alert outline 
          type="error" 
          :value="true" 
-         style="color: primary"
+         style="border-radius: 3px;"
          v-if="userTasks.length === 0">
          You have to add tasks first. 
          Click <router-link :to="'/account'">here</router-link> to add tasks</v-alert> 
@@ -27,8 +28,9 @@
         class="custom-height mb-4"
             :disabled="disableAll" 
             :append-icon="uniqueNumber ? 'done': undefined"
-            :rules="uniqueNumberRules"
+            :rules="uniqueNumberRules"           
             v-model="uniqueNumber"
+            @input="findExistingWorkItem"
             counter="5"
             required
             maxlength="5"
@@ -38,17 +40,17 @@
          <transition name="fade">
             <v-text-field color="primary"  class="custom-height mb-4 mt-5"
             :disabled="disableAll"  
+            :append-icon="description ? 'done': undefined"
+            :rules="descriptionRules"
             v-model="description"
             counter="50"
-            maxlength="50"
-            v-if="uniqueNumber"            
+            maxlength="50"                      
             label="Enter description"
-            :append-icon="description ? 'done': undefined"
                 outline>
             </v-text-field> 
          </transition>
          <transition name="fade">        
-            <v-list v-if="description && uniqueNumber">         
+            <v-list v-if="isValidForm">         
              <v-chip 
              :class="areAllTasksFinished 
              ? 'white--text' 
@@ -143,120 +145,127 @@
 </template>
 
 <script>
-import db from '@/firebase'
-import { mapActions, mapState } from 'vuex'
+import db from '@/firebase';
+import { mapActions, mapState } from 'vuex';
+import { debounce } from "debounce"
 
+export default {
+	data() {
+		return {
+      existingWorkItemDescription: null,
+			isValidForm: false,
+			id: null,
+			userId: null,
+			uniqueNumber: null,
+			description: null,
+			notesDialog: false,
+			notesMessage: null,
+			tasks: [],
+			disableAll: false,
+			date: null,
+			uniqueNumberRules: [
+				v => !!v || 'This field is required',
+				v => (!!v && v.length <= 5) || 'Maximum 5 digits',
+				v => !isNaN(v) || 'Must be a numeric value'
+			],
+			descriptionRules: [
+				v => !!v || 'This field is required',
+				v => (!!v && v.length <= 50) || 'Maximum 50 characters'
+			]
+		};
+	},
+	computed: {
+		...mapState({
+			userTasks: 'userTasks',
+			currentUser: 'currentUser',
+			workItems: 'workItems'
+		}),
+		// existingWorkItemDescription() {
+		// 	if (!isNaN(this.uniqueNumber)) {
+		// 		const existingItem = this.workItems.find(
+		// 			item => item.uniqueNumber === this.uniqueNumber
+		// 		);
+    //     if (existingItem)
+    //      setTimeout(()=>{
+    //        return existingItem.description;
+    //      },1000)
+         
+		// 	}
+		// },
+		areAllTasksFinished() {
+			return this.finishedTasks === this.userTasks.length;
+		},
+		finishedTasks() {
+			return this.tasks.filter(task => task.checked).length;
+		}
+  },  
+	methods: {
+		...mapActions({
+			fetchTasks: 'fetchTasks',
+			fetchWorkItems: 'fetchWorkItems',
+			saveWorkItem: 'saveWorkItem'
+    }),
+    debounceInput: debounce(function(e){
+      this.existingWorkItemDescription = null
+         if (!isNaN(this.uniqueNumber)) {
+				const existingItem = this.workItems.find(
+					item => item.uniqueNumber === this.uniqueNumber
+				);
+        
+        if (existingItem)         
+           this.existingWorkItemDescription = existingItem.description;
+         }
+    },2000)
+    ,  
+    findExistingWorkItem(uniqueNumber) {
+      this.existingWorkItemDescription = null
+      this.debounceInput()
+    },
+		async commitSave() {
+			this.disableAll = true;
+			const workItem = {
+				userId: this.currentUser.user.uid,
+				uniqueNumber: this.uniqueNumber,
+				description: this.description,
+				tasks: this.tasks,
+				notes: this.notesDialog,
+				notesMessage: this.notesMessage,				
+				date: new Date()
+					.toJSON()
+					.slice(0, 10)
+					.replace(/-/g, '/')
+			};
 
-export default {  
-  data() {
-    return {
-      valid: false,
-      id: null,
-      userId: null,
-      uniqueNumber: null,
-      description: null,
-      notesDialog: false,
-      notesMessage: null,
-      tasks: [],
-      disableAll: false,
-      date: null,      
-      existingWorkItem: {
-        uniqueNumber: null,
-        description: null
-      },
-      uniqueNumberRules: [
-        v => !!v|| 'This field is required',
-        v => !!v && v.length <= 5 || 'Must be less then 10 characters',
-        v => !isNaN(v) || 'Must be a numeric value'
-      ] 
-    };
-  },  
-  watch:{
-    'uniqueNumber'(to, from) {
-      if(to && to !== '' && this.workItems.some(item => item.uniqueNumber === to)){
-        const existingWorkItem = this.workItems.find(item => item.uniqueNumber === to)
-        this.existingWorkItem = { ...existingWorkItem }
-      }else{
-        this.existingWorkItem.uniqueNumber = null,
-        this.existingWorkItem.description = null
-      }      
-    }
-  },
-  computed: {
-    ...mapState({      
-      userTasks: 'userTasks',
-      currentUser: 'currentUser',   
-      workItems: 'workItems'   
-    }), 
-    areAllTasksFinished(){
-      return this.finishedTasks === this.userTasks.length 
-    },
-    finishedTasks() {
-      return this.tasks.filter(task => task.checked).length;
-    },      
-   
-  },   
-  methods: {
-    ...mapActions({
-      fetchTasks: 'fetchTasks',
-      fetchWorkItems: 'fetchWorkItems',
-      saveWorkItem: 'saveWorkItem'
-    }),   
-       
-    clearForm() {
-      this.uniqueNumber = null;
-      this.description = null;
-      this.tasks = this.userTasks.map(x => ({ ...x }));
-      this.isUniqueNumberEditable = true
-      this.isDescriptionEditable = true
-    },
-    async commitSave() {
-      this.disableAll = true;       
-          const workItem = {
-            userId: this.currentUser.user.uid,
-            uniqueNumber: this.uniqueNumber,
-            description: this.description,
-            tasks: this.tasks,
-            notes: this.notesDialog,
-            notesMessage: this.notesMessage,
-            progress: this.progress,           
-            date: new Date()
-                .toJSON()
-                .slice(0, 10)
-                .replace(/-/g, "/")
-      }
-          
-      await this.saveWorkItem(workItem)                  
-      this.resetWorkItem()
-      this.disableAll = false  
-    },
-    async save() {      
-        await this.commitSave()     
-    }, 
-  
-  },  
-  created() { 
-      this.tasks = this.userTasks.map(x => ({ ...x }))       
-  }
+			await this.saveWorkItem(workItem);
+      this.uniqueNumber = null
+      this.$refs.form.reset()
+			this.disableAll = false;
+		},
+		async save() {
+			await this.commitSave();
+		}
+	},
+	created() {
+		this.tasks = this.userTasks.map(x => ({ ...x }));
+	}
 };
 </script>
 
 <style scoped>
 .custom-height {
-  height: 53px;
+	height: 53px;
 }
 .alert-success {
-  border: 2px solid greenyellow;
-  border-radius: 5px;
+	border: 2px solid greenyellow;
+	border-radius: 5px;
 }
 .white {
-  color: white;
+	color: white;
 }
 .black {
-  color: black;
+	color: black;
 }
 .task-finished {
-  text-decoration: line-through;
+	text-decoration: line-through;
 }
-
 </style>

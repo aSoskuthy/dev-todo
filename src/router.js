@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 import WorkItemCreate from '@/components/work_item/Create'
+import WorkItemEdit from '@/components/work_item/Edit'
 import AccountView from '@/views/AccountView'
 import WorkItemsView from '@/views/WorkItemsView'
 import store from '@/store'
@@ -21,6 +22,15 @@ let router = new Router({
         requiresAuth: true
       }
     },
+     {
+      path: '/edit/:uniqueNumber',
+      name: 'edit',
+      component: WorkItemEdit,
+      props: true,
+      meta: {
+        requiresAuth: true
+      }
+     },  
     {
       path: '/account',
       name: 'account',     

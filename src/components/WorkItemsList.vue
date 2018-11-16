@@ -65,95 +65,94 @@
 </template>
 
 <script>
-import db from '@/firebase'
-import Vue from 'vue'
-import { mapActions, mapMutations, mapGetters } from 'vuex'
+import db from '@/firebase';
+import Vue from 'vue';
+import { mapActions, mapMutations, mapGetters } from 'vuex';
 
 export default {
-data(){
-    return {
-         defaultFontSize: 24,
-         fontIncrementSize: 8,
-         successColor:'teal',
-         defaultColor: 'grey',
-         loading: true,
-         search: null,
-         headers: [
-            { text: 'PO Number', value:'uniqueNumber',  align: 'left', sortable: true },
-            { text: 'Description', value: 'description', sortable: true },
-            { text: 'Completion', value: 'progress', sortable: true },
-            { text: 'Date', value: 'date', sortable: true },
-            { text: 'Notes', sortable: false }                   
-         
-        ],
-    }
-},
-computed: {
-    ...mapGetters({
-        workItems: 'workItems',
-        currentUser: 'currentUser'
-    }),   
-
-},
-methods: {   
-    colorBars(progress){
-    let color
-      if(progress <= 25){
-        color = "red"
-      }else if(progress < 50){
-        color = "orange"
-      }else if(progress <= 75) {
-        color = "blue"
-      }else{
-        color = "teal"
-      }
-      return color
-    },
-    calculateProgress(userTasks) {
-      if(userTasks.length > 0) {
-             const finishedTasks = this.getTasksDone(userTasks)
-             return Math.round(
-               this.getPercentage(
-                 finishedTasks, userTasks.length)
-                 ) 
-        }       
-    },    
-    getPercentage(tasks){
-        return Math.round(this.getTasksDone(tasks) / tasks.length  * 100) 
-    },
-    getIconColorGrade(todo){
-        return todo.checked ? this.successColor : this.defaultColor
-    },
-    getItem(item){
-        this.commitWorkItem(item)
-        this.$router.push('/')
-    },
-    getTasksDone(todos){
-        if(todos.length > 0) {
-             return todos.filter((todo) => todo.checked).length
-        }
-        return 0
-    },   
-    ...mapActions({
-        fetchWorkItems: 'fetchWorkItems',
-        deleteWorkItem: 'deleteWorkItem'
-    }),
-    ...mapMutations({
-        commitWorkItem: 'SET_WORK_ITEM'
-    })     
-},
-async created() {
-     this.loading = true
-     console.log('started fetch in created')
-     await this.fetchWorkItems()    
-      console.log('finished fetch in created')
-     this.loading = false
-}
-}
+	data() {
+		return {
+			defaultFontSize: 24,
+			fontIncrementSize: 8,
+			successColor: 'teal',
+			defaultColor: 'grey',
+			loading: true,
+			search: null,
+			headers: [
+				{
+					text: 'PO Number',
+					value: 'uniqueNumber',
+					align: 'left',
+					sortable: true
+				},
+				{ text: 'Description', value: 'description', sortable: true },
+				{ text: 'Completion', value: 'progress', sortable: true },
+				{ text: 'Date', value: 'date', sortable: true },
+				{ text: 'Notes', sortable: false }
+			]
+		};
+	},
+	computed: {
+		...mapGetters({
+			workItems: 'workItems',
+			currentUser: 'currentUser'
+		})
+	},
+	methods: {
+		colorBars(progress) {
+			let color;
+			if (progress <= 25) {
+				color = 'red';
+			} else if (progress < 50) {
+				color = 'orange';
+			} else if (progress <= 75) {
+				color = 'blue';
+			} else {
+				color = 'teal';
+			}
+			return color;
+		},
+		calculateProgress(userTasks) {
+			if (userTasks.length > 0) {
+				const finishedTasks = this.getTasksDone(userTasks);
+				return Math.round(this.getPercentage(finishedTasks, userTasks.length));
+			}
+		},
+		getPercentage(tasks) {
+			return Math.round((this.getTasksDone(tasks) / tasks.length) * 100);
+		},
+		getIconColorGrade(todo) {
+			return todo.checked ? this.successColor : this.defaultColor;
+		},
+		getItem(item) {
+			this.$router.push('/edit/'+ item.uniqueNumber);
+		},
+		getTasksDone(todos) {
+			if (todos.length > 0) {
+				return todos.filter(todo => todo.checked).length;
+			}
+			return 0;
+		},
+		...mapActions({
+			fetchWorkItems: 'fetchWorkItems',
+			deleteWorkItem: 'deleteWorkItem'
+		}),
+		...mapMutations({
+			commitWorkItem: 'SET_WORK_ITEM'
+		})
+	},
+	async created() {
+		this.loading = true;
+		console.log('started fetch in created');
+		await this.fetchWorkItems();
+		console.log('finished fetch in created');
+		this.loading = false;
+	}
+};
 </script>
 
 <style>
-.delete-icon:hover{
-    color: teal !important;
+.delete-icon:hover {
+	color: teal !important;
 }
 </style>

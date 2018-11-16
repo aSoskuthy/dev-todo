@@ -21,26 +21,12 @@ export default new Vuex.Store({
   },
   state: {
     currentUser: null,      
-    workItem: {
-      userId: null,
-      uniqueNumber: null,
-      description: null,
-      notesDialog: false,
-      notesMessage: null,
-      todos: [],
-      disableAll: false,
-      date: null,
-      isUniqueNumberEditable: true,
-      isDescriptionEditable: true,     
-      progress: null 
-    },
     workItems: [],
     userTasks: []    
   },
   getters: {
     workItemById: state => uniqueNumber => state.workItems.find(item => item.uniqueNumber === uniqueNumber),
-    workItems: (state) => state.workItems,    
-    workItem: (state) => state.workItem,
+    workItems: (state) => state.workItems,   
     userTasks: (state) => state.userTasks.sort((a,b) => a.order - b.order),
     currentUser: (state) => state.currentUser,   
     getUserId: (state) => state.currentUser ? state.currentUser.user.uid : null
@@ -157,9 +143,9 @@ export default new Vuex.Store({
       
     },    
     async updateWorkItem({commit}, workItem){
-      await db.collection('workItems').doc(workItem.id).update(workItem)
+      const itemRef = await db.collection('workItems').doc(workItem.id).update(workItem)
       commit('UPDATE_WORK_ITEM', workItem)
-    },
+     },
     async addWorkItem({commit}, workItem){
       let itemRef = await db.collection('workItems').add(workItem)
         commit('ADD_WORK_ITEM', {
@@ -167,14 +153,21 @@ export default new Vuex.Store({
           id: itemRef.id
         })
     },
-    async saveWorkItem({ dispatch, state }, workItem) {
-      let existingWorkItem = state.workItems.find(x => x.uniqueNumber === workItem.uniqueNumber)
-      if (existingWorkItem) {
-        await dispatch('updateWorkItem', {...workItem, id: existingWorkItem.id})        
-      } else {      
-        await dispatch('addWorkItem', workItem)
-      }
+    async saveWorkItem({ commit }, workItem){
+      const itemRef = await db.collection('workItems').add(workItem)
+        commit('ADD_WORK_ITEM', {
+          ...workItem,
+          id: itemRef.id
+        })
     },
+    // async saveWorkItem({ dispatch, state }, workItem) {
+    //   let existingWorkItem = state.workItems.find(x => x.uniqueNumber === workItem.uniqueNumber)
+    //   if (existingWorkItem) {
+    //     await dispatch('updateWorkItem', {...workItem, id: existingWorkItem.id})        
+    //   } else {      
+    //     await dispatch('addWorkItem', workItem)
+    //   }
+    // },
     async fetchWorkItems({ commit, state }) {     
       commit('CLEAR_WORK_ITEMS') 
       let workItems = await db.collection('workItems').where('userId', '==', state.currentUser.user.uid).get()
