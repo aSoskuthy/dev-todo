@@ -2,17 +2,17 @@
 <v-container>
     <v-layout>
       <v-flex  md6 offset-md3>   
-      <v-form ref="form" v-model="isValidForm">
+      <v-form @submit.prevent ref="form" v-model="isValidForm">
         <transition name="fade">
         <v-alert 
-         v-if="existingWorkItemDescription && !disableAll" 
+         v-if="isExistingWorkItem" 
          class="mb-3" 
-         outline 
-         type="error"  
+          outline
+         type="info"  
          style="border-radius: 3px"
          :value="true">
-         Saving will overwrite an existing item "{{ existingWorkItemDescription }}"<br> 
-         Load it instead? <router-link :to="'/edit/' + uniqueNumber">Click to Load</router-link> </v-alert> 
+          You are editing an existing item
+         </v-alert> 
          </transition>
         <v-alert outline 
          type="error" 
@@ -26,20 +26,20 @@
         <v-text-field 
         color="primary" 
         class="custom-height mb-4"
-            :disabled="disableAll" 
+            :disabled="isProcessing" 
             :append-icon="uniqueNumber ? 'done': undefined"
             :rules="uniqueNumberRules"           
             v-model="uniqueNumber"
-            @input="findExistingWorkItem"
+            @input="debounceInput"
             counter="5"
-            required
+            
             maxlength="5"
             label="Enter PO Number"   
             outline>
          </v-text-field> 
          <transition name="fade">
             <v-text-field color="primary"  class="custom-height mb-4 mt-5"
-            :disabled="disableAll"  
+            :disabled="isProcessing"  
             :append-icon="description ? 'done': undefined"
             :rules="descriptionRules"
             v-model="description"
@@ -65,7 +65,7 @@
                 >         
                 <v-list-tile-avatar>
                     <v-checkbox 
-                    :disabled="disableAll"  
+                    :disabled="isProcessing"  
                     color="primary"  
                     v-model="item.checked"></v-checkbox>
                 </v-list-tile-avatar>
@@ -77,19 +77,28 @@
                 </v-list-tile-content>
                 </v-list-tile>
             <v-tooltip bottom>Save
-            <v-btn  
+            <v-btn  v-if="!isExistingWorkItem"
             slot="activator"         
-            :disabled="disableAll"   
-            @click="save" 
-            dark 
+            :loading="isProcessing"   
+            @click="saveClicked('saveWorkItem')"              
             color="primary">
         <v-icon dark>save</v-icon>
-    </v-btn>   
+            </v-btn>
+            </v-tooltip> 
+        <v-tooltip bottom>Overwrite
+        <v-btn  v-if="isExistingWorkItem"
+            slot="activator"         
+            :loading="isProcessing"   
+            @click="saveClicked('updateWorkItem')" 
+            color="primary">
+        <v-icon dark>save</v-icon>        
+    </v-btn>  
+
     </v-tooltip> 
     <v-tooltip  bottom>Add a note
     <v-btn 
     slot="activator" 
-    :disabled="disableAll" 
+    :disabled="isProcessing" 
     @click="notesDialog = true" 
     dark 
     color="primary">
@@ -100,17 +109,7 @@
             </v-list>
           
          </transition>    
-    <transition name="fade">
-    <v-alert v-show="disableAll"
-      class="alert-success"
-      :disabled="disableAll" 
-      color="success"
-      icon="check_circle"
-      outline
-    >
-      Item saved successfully
-    </v-alert>
-    </transition >
+
     <v-dialog
       v-model="notesDialog"
       max-width="870"
@@ -147,12 +146,13 @@
 <script>
 import db from '@/firebase';
 import { mapActions, mapState } from 'vuex';
-import { debounce } from "debounce"
+import { debounce } from 'debounce';
 
 export default {
 	data() {
 		return {
-      existingWorkItemDescription: null,
+			isProcessing: false,
+			isExistingWorkItem: false,
 			isValidForm: false,
 			id: null,
 			userId: null,
@@ -161,7 +161,6 @@ export default {
 			notesDialog: false,
 			notesMessage: null,
 			tasks: [],
-			disableAll: false,
 			date: null,
 			uniqueNumberRules: [
 				v => !!v || 'This field is required',
@@ -180,69 +179,73 @@ export default {
 			currentUser: 'currentUser',
 			workItems: 'workItems'
 		}),
-		// existingWorkItemDescription() {
-		// 	if (!isNaN(this.uniqueNumber)) {
-		// 		const existingItem = this.workItems.find(
-		// 			item => item.uniqueNumber === this.uniqueNumber
-		// 		);
-    //     if (existingItem)
-    //      setTimeout(()=>{
-    //        return existingItem.description;
-    //      },1000)
-         
-		// 	}
-		// },
 		areAllTasksFinished() {
 			return this.finishedTasks === this.userTasks.length;
 		},
 		finishedTasks() {
 			return this.tasks.filter(task => task.checked).length;
 		}
-  },  
+	},
 	methods: {
 		...mapActions({
 			fetchTasks: 'fetchTasks',
 			fetchWorkItems: 'fetchWorkItems',
-			saveWorkItem: 'saveWorkItem'
-    }),
-    debounceInput: debounce(function(e){
-      this.existingWorkItemDescription = null
-         if (!isNaN(this.uniqueNumber)) {
-				const existingItem = this.workItems.find(
+			saveWorkItem: 'saveWorkItem',
+			updateWorkItem: 'updateWorkItem'
+		}),
+		debounceInput: debounce(function(e) {
+     
+			var existingItem;
+			if (!isNaN(this.uniqueNumber)) {
+				existingItem = this.workItems.find(
 					item => item.uniqueNumber === this.uniqueNumber
 				);
-        
-        if (existingItem)         
-           this.existingWorkItemDescription = existingItem.description;
-         }
-    },2000)
-    ,  
-    findExistingWorkItem(uniqueNumber) {
-      this.existingWorkItemDescription = null
-      this.debounceInput()
+				if (existingItem) {
+					console.log(existingItem.tasks[0].checked);
+					this.isExistingWorkItem = true;
+					this.description = existingItem.description;
+					this.id = existingItem.id;
+					this.tasks = existingItem.tasks;
+					this.notesMessage = existingItem.notesMessage;
+				} else {
+					this.isExistingWorkItem = false;
+					this.description = null;
+					this.id = null;
+					this.tasks = this.userTasks.map(x => ({ ...x }));
+					this.notesMessage = null;
+				}
+			}
+    }, 1000),
+    async saveClicked(actionName){
+      this.isProcessing = true;
+      const workItem = this.mapToNewObject()
+      await this.$store.dispatch(actionName, workItem)
+      this.clearForm()
+      this.isProcessing = false
     },
-		async commitSave() {
-			this.disableAll = true;
-			const workItem = {
-				userId: this.currentUser.user.uid,
-				uniqueNumber: this.uniqueNumber,
-				description: this.description,
-				tasks: this.tasks,
-				notes: this.notesDialog,
-				notesMessage: this.notesMessage,				
-				date: new Date()
-					.toJSON()
+    mapToNewObject(){
+      return {
+        id: this.id,
+        userId: this.currentUser.user.uid,
+        uniqueNumber: this.uniqueNumber,
+        description: this.description,
+        tasks: this.tasks,
+        notesMessage: this.notesMessage,
+        date: new Date()
+        	.toJSON()
 					.slice(0, 10)
 					.replace(/-/g, '/')
-			};
-
-			await this.saveWorkItem(workItem);
-      this.uniqueNumber = null
-      this.$refs.form.reset()
-			this.disableAll = false;
-		},
-		async save() {
-			await this.commitSave();
+      }
+    },
+		clearForm() {
+			  this.id = null
+				this.userId = null
+				this.uniqueNumber = null
+				this.description = null
+				this.notesMessage = null
+				this.tasks = this.userTasks.map(x => ({ ...x }))
+        this.isExistingWorkItem = false
+        this.$refs.form.resetValidation()				
 		}
 	},
 	created() {

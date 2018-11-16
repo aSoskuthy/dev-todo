@@ -22,12 +22,10 @@
             outline>
          </v-text-field> 
          <transition name="fade">
-            <v-text-field color="primary"  class="custom-height mb-4 mt-5"
-            :disabled="existingWorkItem.readOnly" 
-            v-model="existingWorkItem.description"
- 
+            <v-text-field color="primary"  class="custom-height mb-4 mt-5"           
+            v-model="existingWorkItem.description" 
             label="Description"
-                outline>
+            outline>
             </v-text-field> 
          </transition>
          <transition name="fade">        

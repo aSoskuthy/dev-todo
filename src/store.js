@@ -31,20 +31,17 @@ export default new Vuex.Store({
     currentUser: (state) => state.currentUser,   
     getUserId: (state) => state.currentUser ? state.currentUser.user.uid : null
   },
-  mutations: { 
-    UPDATE_WORK_ITEM: (state, workItem)=> {
-      state.workItem = Object.assign({}, state.workItem, workItem)
-    },   
+  mutations: {      
     SET_WORK_ITEM: (state, workItem) => state.workItem = { 
       ...state.workItem, ...workItem  
     },
     CLEAR_WORK_ITEM: (state) => state.workItem = null,
-    // UPDATE_WORK_ITEM: (state, workItem) => {
-    //   let itemIndex = state.workItems.findIndex(
-    //     (x) => x.uniqueNumber === workItem.uniqueNumber
-    //   )
-    //   state.workItems[itemIndex] = { ...workItem }
-    // },
+    UPDATE_WORK_ITEM: (state, workItem) => {
+      const itemIndex = state.workItems.findIndex(
+        (x) => x.uniqueNumber === workItem.uniqueNumber
+      )
+      state.workItems[itemIndex] = { ...state.workItems[itemIndex],...workItem }
+    },
     ADD_WORK_ITEM: (state, workItem) => {
       state.workItems.push(workItem)
     },
