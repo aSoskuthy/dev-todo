@@ -151,7 +151,7 @@ import { debounce } from 'debounce';
 export default {
 	data() {
 		return {
-			isProcessing: false,
+      isProcessing: false,      
 			isExistingWorkItem: false,
 			isValidForm: false,
 			id: null,
@@ -189,33 +189,26 @@ export default {
 	methods: {
 		...mapActions({
 			fetchTasks: 'fetchTasks',
-			fetchWorkItems: 'fetchWorkItems',
-			saveWorkItem: 'saveWorkItem',
-			updateWorkItem: 'updateWorkItem'
+			fetchWorkItems: 'fetchWorkItems',		
 		}),
-		debounceInput: debounce(function(e) {
-     
+		debounceInput: debounce(function() {     
 			var existingItem;
 			if (!isNaN(this.uniqueNumber)) {
 				existingItem = this.workItems.find(
 					item => item.uniqueNumber === this.uniqueNumber
 				);
-				if (existingItem) {
-					console.log(existingItem.tasks[0].checked);
+				if (existingItem) {					
 					this.isExistingWorkItem = true;
 					this.description = existingItem.description;
 					this.id = existingItem.id;
 					this.tasks = existingItem.tasks;
 					this.notesMessage = existingItem.notesMessage;
-				} else {
-					this.isExistingWorkItem = false;
-					this.description = null;
-					this.id = null;
-					this.tasks = this.userTasks.map(x => ({ ...x }));
-					this.notesMessage = null;
-				}
+        }else{
+          this.isExistingWorkItem = false;
+        }
+        
 			}
-    }, 1000),
+    }, 750),
     async saveClicked(actionName){
       this.isProcessing = true;
       const workItem = this.mapToNewObject()

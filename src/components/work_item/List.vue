@@ -23,25 +23,12 @@
     <tr style="cursor: pointer" >
       <td @click="getItem(props.item)" class="text-xs-left">{{ props.item.uniqueNumber }}</td>
       <td @click="getItem(props.item)" class="text-xs-left">{{ props.item.description }}</td>      
-      <td @click="getItem(props.item)" class="text-xs-left">
-     <!-- <v-icon
-      class="hidden-sm-and-down"
-      small 
-      v-for="todo in props.item.todos"
-      :color="getIconColorGrade(todo)" 
-      :key="todo.date">grade</v-icon>        -->
-      <v-tooltip left>{{props.item.progress}}%
-       <v-progress-linear slot="activator" :color="colorBars(props.item.progress)"
-       
-        v-model="props.item.progress"></v-progress-linear></v-tooltip>
-        <!-- <v-progress-circular
-      :value="getPercentage(props.item.todos)"
-      color="teal"
-      :width="3"
-      size="36"
-      style="font-size: 10px"
-    >{{getPercentage(props.item.todos)}}</v-progress-circular> -->
-    
+      <td @click="getItem(props.item)" class="text-xs-left">     
+      <v-tooltip left>{{getPercentage(props.item.tasks)}}%
+       <v-progress-linear slot="activator" 
+	    :color="colorBars(props.item.tasks)"
+        :value="getPercentage(props.item.tasks)"></v-progress-linear>
+	</v-tooltip>
       </td>
       <td @click="getItem(props.item)" class="text-xs-left">{{props.item.date}}</td>
       <td class="text-xs-left">  
@@ -49,14 +36,14 @@
         {{ props.item.notesMessage }}
       <v-icon 
       slot="activator"                      
-      :color="successColor">note</v-icon>        
+      color="primary">note</v-icon>        
         </v-tooltip>
-        <v-icon :color="defaultColor" v-else>note</v-icon>
+        <v-icon color="grey" v-else>note</v-icon>
           <v-icon 
            class="delete-icon"
            @click="deleteWorkItem(props.item)" 
            :mouseover="color=successColor"         
-           :color="defaultColor">delete</v-icon>
+           color="primary">delete</v-icon>
       </td>
       </tr>
     </template>
@@ -72,10 +59,6 @@ import { mapActions, mapMutations, mapGetters } from 'vuex';
 export default {
 	data() {
 		return {
-			defaultFontSize: 24,
-			fontIncrementSize: 8,
-			successColor: 'teal',
-			defaultColor: 'grey',
 			loading: true,
 			search: null,
 			headers: [
@@ -99,8 +82,8 @@ export default {
 		})
 	},
 	methods: {
-		colorBars(progress) {
-			let color;
+		colorBars(tasks) {
+			let color, progress = this.getPercentage(tasks);
 			if (progress <= 25) {
 				color = 'red';
 			} else if (progress < 50) {
@@ -120,10 +103,7 @@ export default {
 		},
 		getPercentage(tasks) {
 			return Math.round((this.getTasksDone(tasks) / tasks.length) * 100);
-		},
-		getIconColorGrade(todo) {
-			return todo.checked ? this.successColor : this.defaultColor;
-		},
+		},		
 		getItem(item) {
 			this.$router.push('/edit/'+ item.uniqueNumber);
 		},

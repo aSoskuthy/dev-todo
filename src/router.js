@@ -2,13 +2,13 @@ import Vue from 'vue'
 import Router from 'vue-router'
 import WorkItemCreate from '@/components/work_item/Create'
 import WorkItemEdit from '@/components/work_item/Edit'
+import WorkItemList from '@/components/work_item/List'
 import AccountView from '@/views/AccountView'
-import WorkItemsView from '@/views/WorkItemsView'
 import store from '@/store'
 
 Vue.use(Router)
 
-let router = new Router({
+const router = new Router({
   routes: [
     {
       path: '*',
@@ -39,7 +39,7 @@ let router = new Router({
     {
       path: '/history',
       name: 'history',     
-      component: WorkItemsView,
+      component: WorkItemList,
       meta: {
         requiresAuth: true
       }
@@ -54,8 +54,8 @@ let router = new Router({
 
 router.beforeEach((to, from, next) =>{
 
-let currentUser = store.getters.currentUser
-let requiresAuth = to.matched.some(record => record.meta.requiresAuth)
+const currentUser = store.getters.currentUser
+const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
 
 if(requiresAuth && !currentUser) 
   next('account')
